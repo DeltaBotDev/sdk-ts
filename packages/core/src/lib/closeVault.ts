@@ -1,27 +1,28 @@
-import { botNearContractServices, botSolanaContractServices } from '@/services/bot/contract';
+import {
+  BotContractServices,
+  botNearContractServices,
+  botSolanaContractServices,
+} from '@/services/bot/contract';
 import { globalState } from '@/stores';
 
-export async function closeNearGridVault(params: { botId: number }) {
-  if (!globalState.get('accountId')) throw new Error('Please set accountId before closing a vault');
-  return botNearContractServices.closeGridBot(params.botId);
+export async function closeGridVault<ChainType extends Chain>(params: {
+  botId: number;
+}): Promise<ReturnType<BotContractServices<ChainType>['closeGridBot']>> {
+  const chain = globalState.get('chain') as ChainType;
+  const trans =
+    chain === 'near'
+      ? botNearContractServices.closeGridBot(params.botId)
+      : botSolanaContractServices.closeGridBot(params.botId);
+  return trans as ReturnType<BotContractServices<ChainType>['closeGridBot']>;
 }
 
-export async function closeNearSwingVault(params: { botId: number }) {
-  if (!globalState.get('accountId')) throw new Error('Please set accountId before closing a vault');
-  return botNearContractServices.closeGridBot(params.botId);
-}
-
-export async function closeNearDCAVault(params: { botId: string }) {
-  if (!globalState.get('accountId')) throw new Error('Please set accountId before closing a vault');
-  return botNearContractServices.closeDCABot(params.botId);
-}
-
-export async function closeSolanaGridVault(params: { botId: number }) {
-  if (!globalState.get('accountId')) throw new Error('Please set accountId before closing a vault');
-  return botSolanaContractServices.closeGridBot(params.botId);
-}
-
-export async function closeSolanaSwingVault(params: { botId: number }) {
-  if (!globalState.get('accountId')) throw new Error('Please set accountId before closing a vault');
-  return botSolanaContractServices.closeGridBot(params.botId);
+export async function closeDCAVault<ChainType extends Chain>(params: {
+  botId: string;
+}): Promise<ReturnType<BotContractServices<ChainType>['closeDCABot']>> {
+  const chain = globalState.get('chain') as ChainType;
+  const trans =
+    chain === 'near'
+      ? botNearContractServices.closeDCABot(params.botId)
+      : botSolanaContractServices.closeDCABot(params.botId);
+  return trans as ReturnType<BotContractServices<ChainType>['closeDCABot']>;
 }

@@ -2,20 +2,8 @@ import { GridBotContractParams } from '@/services/bot/contract';
 import { globalState } from '@/stores';
 import { validateDCAVaultParams, createDCAVault, type CreateDCAVaultParams } from './createVault';
 import { getPairs, getPairPrices } from './pair';
-import {
-  claimNearGridVault,
-  claimNearSwingVault,
-  claimNearDCAVault,
-  claimSolanaGridVault,
-  claimSolanaSwingVault,
-} from './claimVault';
-import {
-  closeNearGridVault,
-  closeNearSwingVault,
-  closeNearDCAVault,
-  closeSolanaGridVault,
-  closeSolanaSwingVault,
-} from './closeVault';
+import { claimDCAVault, claimGridVault } from './claimVault';
+import { closeDCAVault, closeGridVault } from './closeVault';
 import {
   getMyGridVaults,
   getMySwingVaults,
@@ -25,6 +13,8 @@ import {
   getMarketDCAVaults,
 } from './vaultList';
 import { getAccountAssets, withdrawAccountAsset } from './userAssets';
+import { getMarketInfo } from './market';
+import { generateReferralUrl } from './referral';
 
 export type { CreateDCAVaultParams, GridBotContractParams };
 
@@ -81,6 +71,14 @@ export default class DeltaTradeSDK<ChainType extends Chain = Chain> {
   public validateDCAVaultParams = validateDCAVaultParams;
   public createDCAVault = createDCAVault<ChainType>;
 
+  public claimGridVault = claimGridVault;
+  public claimSwingVault = claimGridVault;
+  public claimDCAVault = claimDCAVault;
+
+  public closeGridVault = closeGridVault;
+  public closeSwingVault = closeGridVault;
+  public closeDCAVault = closeDCAVault;
+
   public getMyGridVaults = getMyGridVaults;
   public getMySwingVaults = getMySwingVaults;
   public getMyDCAVaults = getMyDCAVaults;
@@ -88,6 +86,10 @@ export default class DeltaTradeSDK<ChainType extends Chain = Chain> {
   public getMarketSwingVaults = getMarketSwingVaults;
   public getMarketDCAVaults = getMarketDCAVaults;
 
+  public getMarketInfo = getMarketInfo;
+
   public getAccountAssets = getAccountAssets;
   public withdrawAccountAsset = withdrawAccountAsset;
+
+  public generateReferralUrl = generateReferralUrl;
 }

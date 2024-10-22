@@ -1,33 +1,25 @@
-import { botNearContractServices } from '@/services/bot/contract';
+import { BotContractServices, botNearContractServices } from '@/services/bot/contract';
 import { globalState } from '@/stores';
 import { botSolanaContractServices } from '@/services/bot/contract';
 
-export async function claimNearGridVault(params: { botId: number }) {
-  if (!globalState.get('accountId'))
-    throw new Error('Please set accountId before claiming a vault');
-  return botNearContractServices.claimGridBot(params.botId);
+export async function claimGridVault<ChainType extends Chain>(params: {
+  botId: number;
+}): Promise<ReturnType<BotContractServices<ChainType>['claimGridBot']>> {
+  const chain = globalState.get('chain') as ChainType;
+  const trans =
+    chain === 'near'
+      ? botNearContractServices.claimGridBot(params.botId)
+      : botSolanaContractServices.claimGridBot(params.botId);
+  return trans as ReturnType<BotContractServices<ChainType>['claimGridBot']>;
 }
 
-export async function claimNearSwingVault(params: { botId: number }) {
-  if (!globalState.get('accountId'))
-    throw new Error('Please set accountId before claiming a vault');
-  return botNearContractServices.claimGridBot(params.botId);
-}
-
-export async function claimNearDCAVault(params: { botId: string }) {
-  if (!globalState.get('accountId'))
-    throw new Error('Please set accountId before claiming a vault');
-  return botNearContractServices.claimDCABot(params.botId);
-}
-
-export async function claimSolanaGridVault(params: { botId: number }) {
-  if (!globalState.get('accountId'))
-    throw new Error('Please set accountId before claiming a vault');
-  return botSolanaContractServices.claimGridBot(params.botId);
-}
-
-export async function claimSolanaSwingVault(params: { botId: number }) {
-  if (!globalState.get('accountId'))
-    throw new Error('Please set accountId before claiming a vault');
-  return botSolanaContractServices.claimGridBot(params.botId);
+export async function claimDCAVault<ChainType extends Chain>(params: {
+  botId: string;
+}): Promise<ReturnType<BotContractServices<ChainType>['claimDCABot']>> {
+  const chain = globalState.get('chain') as ChainType;
+  const trans =
+    chain === 'near'
+      ? botNearContractServices.claimDCABot(params.botId)
+      : botSolanaContractServices.claimDCABot(params.botId);
+  return trans as ReturnType<BotContractServices<ChainType>['claimDCABot']>;
 }
