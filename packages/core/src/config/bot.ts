@@ -1,0 +1,17 @@
+export const SOLANA_MIN_DEPOSIT = {
+  SOL: 0.16,
+  // SOL: 0.01,
+  WSOL: 0.16,
+  JUP: 30,
+  WBTC: 0.00035,
+  WETH: 0.0084,
+  RAY: 13.5,
+  Bonk: 1200000,
+  Moutai: 3000,
+  $WIF: 13.5,
+  mSOL: 0.125,
+  ORCA: 11.5,
+  KMNO: 520,
+  CIGGS: 80000,
+  BUTT: 24000,
+};
