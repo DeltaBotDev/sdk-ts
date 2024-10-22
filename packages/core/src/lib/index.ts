@@ -71,13 +71,13 @@ export default class DeltaTradeSDK<ChainType extends Chain = Chain> {
   public validateDCAVaultParams = validateDCAVaultParams;
   public createDCAVault = createDCAVault<ChainType>;
 
-  public claimGridVault = claimGridVault;
-  public claimSwingVault = claimGridVault;
-  public claimDCAVault = claimDCAVault;
+  public claimGridVault = claimGridVault<ChainType>;
+  public claimSwingVault = claimGridVault<ChainType>;
+  public claimDCAVault = claimDCAVault<ChainType>;
 
-  public closeGridVault = closeGridVault;
-  public closeSwingVault = closeGridVault;
-  public closeDCAVault = closeDCAVault;
+  public closeGridVault = closeGridVault<ChainType>;
+  public closeSwingVault = closeGridVault<ChainType>;
+  public closeDCAVault = closeDCAVault<ChainType>;
 
   public getMyGridVaults = getMyGridVaults;
   public getMySwingVaults = getMySwingVaults;
