@@ -1,15 +1,28 @@
 {
   "name": "delta-sdk",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.2",
+  "description": "Delta Trade SDK",
   "main": "index.js",
   "scripts": {
-    "dev:examples": "pnpm --filter=!examples build && pnpm --filter=examples dev",
+    "dev:examples": "pnpm --filter=examples dev",
     "build": "pnpm --filter=!examples build",
     "clean": "pnpm -r run clean"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "delta-trade",
+    "sdk",
+    "grid",
+    "swing",
+    "dca",
+    "near",
+    "solana"
+  ],
+  "homepage": "https://github.com/DeltaBotDev/sdk-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DeltaBotDev/sdk-ts.git"
+  },
+  "author": "Delta Trade",
   "license": "ISC",
   "devDependencies": {
     "@types/big.js": "^6.2.2",

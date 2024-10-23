@@ -1,7 +1,11 @@
 {
   "name": "examples",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.0.2",
+  "homepage": "https://github.com/DeltaBotDev/sdk-ts/tree/main/packages/examples",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DeltaBotDev/sdk-ts.git"
+  },
   "scripts": {
     "dev": "next dev -p 3300",
     "build": "next build",
