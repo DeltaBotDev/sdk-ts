@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import ThemeProvider from '@/providers/ThemeProvider';
 import { MessageBoxProvider } from '@/providers/MessageBoxProvider';
+import WalletInfo from '@/components/wallet';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -17,7 +18,10 @@ export default function RootLayout({
     <html lang="en" className="light">
       <body className={`antialiased`}>
         <ThemeProvider>
-          <MessageBoxProvider>{children}</MessageBoxProvider>
+          <MessageBoxProvider>
+            <WalletInfo />
+            <>{children}</>
+          </MessageBoxProvider>
         </ThemeProvider>
       </body>
     </html>

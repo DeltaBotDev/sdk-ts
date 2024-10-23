@@ -1,23 +1,31 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import DeltaTradeSDK, { CreateDCAVaultParams } from '@delta-trade/core';
 import { useRequest } from '@/hooks/useHooks';
 import { Button, Select, SelectItem, Input, Code } from '@nextui-org/react';
-import WalletInfo from '@/components/wallet';
 import dayjs from 'dayjs';
 import { useMessageBoxContext } from '@/providers/MessageBoxProvider';
 
+const sdk = DeltaTradeSDK.initEnv({
+  chain: 'near',
+  network: 'testnet',
+});
+
 export default function Page() {
+  // change accountId
+  useEffect(() => {
+    sdk.changeEnv({ accountId: window.nearWallet?.accountId });
+  }, []);
+
   return (
     <Suspense>
-      <WalletInfo />
-      <VaultPage />
+      <CreateDCAVault />
     </Suspense>
   );
 }
 
-function VaultPage() {
+function CreateDCAVault() {
   const createParams: CreateDCAVaultParams = {
     pairId: '',
     tradeType: 'buy',
