@@ -1,14 +1,14 @@
 import {
   BotContractServices,
-  botContractServices,
   botNearContractServices,
   botSolanaContractServices,
   DCABotContractParams,
-  GridBotContractParams,
 } from '@/services/bot/contract';
 import { pairServices } from '@/services/token';
 import { globalState } from '@/stores';
+import { formatNumber } from '@/utils/format';
 import Big from 'big.js';
+import { validateAccountId, getPair, getMinDeposit, getPairPrice } from '.';
 
 /**
  * Parameters for creating a DCA vault.
@@ -40,13 +40,15 @@ export interface CreateDCAVaultParams {
 
 export async function validateDCAVaultParams(params: CreateDCAVaultParams) {
   validateAccountId();
-  await validatePair(params.pairId);
-  const errors: { [key: string]: string[] } = {}; // 新增错误收集对象
-
+  const errors: { [key: string]: string[] } = {};
+  const pair = await getPair(params.pairId);
+  if (!pair) errors.pair = ['Pair not found'];
   if (!params.count) errors.count = ['Count is required'];
   if (!params.singleAmountIn) errors.singleAmountIn = ['Single amount in is required'];
   if (!params.startTime) errors.startTime = ['Start time is required'];
   if (!params.intervalTime) errors.intervalTime = ['Interval time is required'];
+  if (params.slippage && (params.slippage < 0 || params.slippage > 100))
+    errors.slippage = ['Slippage must be between 0 and 100'];
   if (
     params.lowestPrice &&
     params.highestPrice &&
@@ -55,18 +57,45 @@ export async function validateDCAVaultParams(params: CreateDCAVaultParams) {
     errors.price = ['Lowest price must be less than highest price'];
   }
 
-  const pairPrices = await pairServices.queryPairPrice(params.pairId);
-  if (!pairPrices) errors.pairPrice = ['Pair price not found'];
-  if (params.lowestPrice && new Big(params.lowestPrice).gt(pairPrices[params.pairId].pairPrice)) {
+  const pairPrice = await getPairPrice(params.pairId);
+  if (params.lowestPrice && new Big(params.lowestPrice).gt(pairPrice)) {
     errors.lowestPrice = ['Lowest price is greater than current price'];
   }
-  if (params.highestPrice && new Big(params.highestPrice).lt(pairPrices[params.pairId].pairPrice)) {
+  if (params.highestPrice && new Big(params.highestPrice).lt(pairPrice)) {
     errors.highestPrice = ['Highest price is less than current price'];
+  }
+  const minDeposit = await getDCAMinDeposit(params);
+  const tokenInSymbol = params.tradeType === 'buy' ? pair?.base_token : pair?.quote_token;
+  if (minDeposit && new Big(params.singleAmountIn || 0).lt(minDeposit)) {
+    errors.singleAmountIn = [
+      `The initial investment cannot be less than ${formatNumber(minDeposit, {
+        maximumFractionDigits: 6,
+      })} ${tokenInSymbol}`,
+    ];
   }
 
   if (Object.keys(errors).length > 0) {
     return errors;
   }
+}
+
+export async function getDCAMinDeposit(params: Pick<CreateDCAVaultParams, 'pairId' | 'tradeType'>) {
+  const { minBaseDeposit, minQuoteDeposit } = await getMinDeposit(params.pairId, 'dca');
+  if (params.tradeType === 'buy') return minQuoteDeposit;
+  return minBaseDeposit;
+}
+
+export async function getDCATotalInvestment(params: CreateDCAVaultParams) {
+  const { tradeType, singleAmountIn, count } = params;
+  if (!count || !singleAmountIn || !tradeType) return;
+  const totalInvestment = new Big(singleAmountIn).times(count).toString();
+  const totalBaseInvestment = tradeType === 'sell' ? totalInvestment : '0';
+  const totalQuoteInvestment = tradeType === 'buy' ? totalInvestment : '0';
+
+  return {
+    totalBaseInvestment,
+    totalQuoteInvestment,
+  };
 }
 
 export async function createDCAVault<ChainType extends Chain>(
@@ -84,24 +113,33 @@ export async function createDCAVault<ChainType extends Chain>(
   return trans as ReturnType<BotContractServices<ChainType>['createDCABot']>;
 }
 
-function validateAccountId() {
-  if (!globalState.get('accountId'))
-    throw new Error('Please set accountId before creating a vault');
+export async function claimDCAVault<ChainType extends Chain>(params: {
+  botId: string;
+}): Promise<ReturnType<BotContractServices<ChainType>['claimDCABot']>> {
+  const chain = globalState.get('chain') as ChainType;
+  const trans =
+    chain === 'near'
+      ? botNearContractServices.claimDCABot(params.botId)
+      : botSolanaContractServices.claimDCABot(params.botId);
+  return trans as ReturnType<BotContractServices<ChainType>['claimDCABot']>;
 }
 
-async function validatePair(pairId: string) {
-  const pairs = await pairServices.query();
-  const pair = pairs.find((p) => p.pair_id === pairId);
-  if (!pair) throw new Error('Pair not found');
+export async function closeDCAVault<ChainType extends Chain>(params: {
+  botId: string;
+}): Promise<ReturnType<BotContractServices<ChainType>['closeDCABot']>> {
+  const chain = globalState.get('chain') as ChainType;
+  const trans =
+    chain === 'near'
+      ? botNearContractServices.closeDCABot(params.botId)
+      : botSolanaContractServices.closeDCABot(params.botId);
+  return trans as ReturnType<BotContractServices<ChainType>['closeDCABot']>;
 }
 
 async function transformDCAVaultParams(params: CreateDCAVaultParams) {
-  const [baseToken, quoteToken] = params.pairId.split(':');
-  const pairs = await pairServices.query();
-  const pair = pairs.find((p) => p.pair_id === params.pairId);
+  const pair = await getPair(params.pairId);
   if (!pair) throw new Error('Pair not found');
-  const tokenIn = params.tradeType === 'buy' ? baseToken : quoteToken;
-  const tokenOut = params.tradeType === 'buy' ? quoteToken : baseToken;
+  const tokenIn = params.tradeType === 'buy' ? pair.base_token : pair.quote_token;
+  const tokenOut = params.tradeType === 'buy' ? pair.quote_token : pair.base_token;
   const lowestPrice =
     params.tradeType === 'buy'
       ? params.lowestPrice
@@ -114,6 +152,7 @@ async function transformDCAVaultParams(params: CreateDCAVaultParams) {
       : params.lowestPrice
         ? new Big(1).div(params.lowestPrice)
         : undefined;
+  const { totalBaseInvestment, totalQuoteInvestment } = (await getDCATotalInvestment(params)) || {};
   const formattedParams = {
     name: params.name,
     token_in: tokenIn,
@@ -124,15 +163,13 @@ async function transformDCAVaultParams(params: CreateDCAVaultParams) {
     count: params.count,
     lowest_price: lowestPrice,
     highest_price: highestPrice,
-    slippage: params.slippage,
+    slippage: params.slippage || 0.5,
     recommender: params.recommender || undefined,
     base_token: pair.base_token,
     quote_token: pair.quote_token,
-    total_base_investment: '0',
-    total_quote_investment: '0',
+    total_base_investment: totalBaseInvestment,
+    total_quote_investment: totalQuoteInvestment,
   } as unknown as DCABotContractParams;
-  const { total_base_investment = '0', total_quote_investment = '0' } =
-    botContractServices.calculateDCAInfo(formattedParams) || {};
 
-  return { ...formattedParams, total_base_investment, total_quote_investment };
+  return { ...formattedParams };
 }

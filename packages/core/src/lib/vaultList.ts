@@ -1,7 +1,8 @@
+import { PaginationParams } from '@/services';
 import { botServices, marketServices } from '@/services/bot';
 import { globalState } from '@/stores';
 
-export interface MyVaultsParams {
+export interface MyVaultsParams extends PaginationParams {
   status?: 'position' | 'history';
   pairId?: string;
   orderBy?: string;
@@ -24,16 +25,19 @@ export async function getMyDCAVaults(params: MyVaultsParams) {
 }
 
 function transformMyVaultListParams(params: MyVaultsParams) {
+  const { orderBy, dir, pairId, status, page, pageSize } = params;
   return {
     account_id: globalState.get('accountId'),
-    status: params.status,
-    pair_id: params.pairId,
-    order_by: params.orderBy,
-    dir: params.dir,
+    status,
+    pair_id: pairId,
+    order_by: orderBy,
+    dir,
+    page,
+    pageSize,
   };
 }
 
-export interface MarketVaultsParams {
+export interface MarketVaultsParams extends PaginationParams {
   orderBy?: string;
   dir?: 'asc' | 'desc';
   pairId?: string;
@@ -65,10 +69,13 @@ export async function getMarketDCAVaults(params: MarketVaultsParams) {
 }
 
 function transformMarketVaultListParams(params: MarketVaultsParams) {
+  const { orderBy, dir, pairId, accountId, page, pageSize } = params;
   return {
-    order_by: params.orderBy,
-    dir: params.dir,
-    pair_id: params.pairId,
-    account_id: params.accountId,
+    order_by: orderBy,
+    dir,
+    pair_id: pairId,
+    account_id: accountId,
+    page,
+    pageSize,
   };
 }

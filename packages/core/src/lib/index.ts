@@ -1,9 +1,5 @@
-import { GridBotContractParams } from '@/services/bot/contract';
 import { globalState } from '@/stores';
-import { validateDCAVaultParams, createDCAVault, type CreateDCAVaultParams } from './createVault';
 import { getPairs, getPairPrices } from './pair';
-import { claimDCAVault, claimGridVault } from './claimVault';
-import { closeDCAVault, closeGridVault } from './closeVault';
 import {
   getMyGridVaults,
   getMySwingVaults,
@@ -15,8 +11,38 @@ import {
 import { getAccountAssets, withdrawAccountAsset } from './userAssets';
 import { getMarketInfo } from './market';
 import { generateReferralUrl } from './referral';
+import {
+  validateDCAVaultParams,
+  getDCAMinDeposit,
+  getDCATotalInvestment,
+  createDCAVault,
+  claimDCAVault,
+  closeDCAVault,
+} from './vault/dca';
+import {
+  validateGridVaultParams,
+  getGridMinDeposit,
+  getGridTotalInvestment,
+  createGridVault,
+  claimGridVault,
+  closeGridVault,
+} from './vault/grid';
+import {
+  createSwingVault,
+  getSwingMinDeposit,
+  getSwingTotalInvestment,
+  validateSwingVaultParams,
+} from './vault/swing';
 
-export type { CreateDCAVaultParams, GridBotContractParams };
+export type { CreateGridVaultParams } from './vault/grid';
+export type {
+  CreateSwingVaultParams,
+  CreateClassicSwingVaultParams,
+  CreatePhasedSwingVaultParams,
+} from './vault/swing';
+export type { CreateDCAVaultParams } from './vault/dca';
+
+export type { MyVaultsParams, MarketVaultsParams } from './vaultList';
 
 export type Chain = 'near' | 'solana';
 export type NetworkId = 'mainnet' | 'testnet';
@@ -68,7 +94,20 @@ export default class DeltaTradeSDK<ChainType extends Chain = Chain> {
   public getPairs = getPairs;
   public getPairPrices = getPairPrices;
 
+  public validateGridVaultParams = validateGridVaultParams;
+  public getGridMinDeposit = getGridMinDeposit;
+  public getGridTotalInvestment = getGridTotalInvestment;
+  public createGridVault = createGridVault<ChainType>;
+
+  public validateSwingVaultParams = validateSwingVaultParams;
+  public getSwingMinDeposit = getSwingMinDeposit;
+  public getSwingTotalInvestment = getSwingTotalInvestment;
+  public createClassicSwingVault = createSwingVault<ChainType, 'classic'>;
+  public createPhasedSwingVault = createSwingVault<ChainType, 'phased'>;
+
   public validateDCAVaultParams = validateDCAVaultParams;
+  public getDCAMinDeposit = getDCAMinDeposit;
+  public getDCATotalInvestment = getDCATotalInvestment;
   public createDCAVault = createDCAVault<ChainType>;
 
   public claimGridVault = claimGridVault<ChainType>;
