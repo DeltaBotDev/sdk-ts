@@ -21,11 +21,27 @@ const sdk = DeltaTradeSDK.initEnv({
 
 export default function Page() {
   return (
-    <div>
-      <div className="flex justify-between">
-        <h1 className="text-2xl font-bold">Market DCA Vaults</h1>
-      </div>
+    <div className="p-5 flex flex-col gap-5">
+      <MarketInfo />
       <DCAVaults />
+    </div>
+  );
+}
+
+function MarketInfo() {
+  const { data } = useRequest(sdk.getMarketInfo);
+  return (
+    <div>
+      <div className="text-2xl font-bold">Market Info</div>
+      <div className="grid grid-cols-3 gap-2">
+        <div>Total Profit: {data?.arbitrage_profit}</div>
+        <div>24H Profit: {data?.profit_24}</div>
+        <div>Total Position: {data?.total_position}</div>
+        <div>Current Position: {data?.position}</div>
+        <div>Total Volume: {data?.volume_total}</div>
+        <div>24H Volume: {data?.volume_24h}</div>
+        <div>Total Users: {data?.total_users}</div>
+      </div>
     </div>
   );
 }
@@ -62,6 +78,7 @@ function DCAVaults() {
 
   return (
     <div>
+      <div className="text-2xl font-bold">Market DCA Vaults</div>
       <Table
         bottomContent={
           hasMore && (

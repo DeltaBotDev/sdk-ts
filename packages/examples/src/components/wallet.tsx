@@ -97,7 +97,7 @@ export default function WalletInfo() {
   }, [wallet, isSignedIn, accountId]);
 
   return (
-    <div className="card flex items-center gap-5">
+    <div className="flex items-center justify-between gap-5 border-b border-divider p-3">
       <div className="flex items-center gap-5">
         <Button onClick={selectWallet}>Select Wallet</Button>
         <Button onClick={disconnect}>Disconnect</Button>
