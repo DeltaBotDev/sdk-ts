@@ -1,24 +1,39 @@
 {
   "name": "@delta-trade/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/DeltaBotDev/sdk-ts/tree/main/packages/core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DeltaBotDev/sdk-ts.git"
+  },
   "type": "module",
+  "main": "dist/index.js",
+  "module": "esm/index.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "esm"
   ],
-  "main": "dist/index.umd.js",
-  "module": "dist/index.mjs",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.umd.js"
+      "import": "./esm/index.js",
+      "require": "./dist/index.js"
     }
   },
-  "types": "dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "clean": "rm -rf dist"
+    "dev": "pnpm clean && NODE_ENV=development pnpm build:watch && NODE_ENV=development pnpm typeGen:watch",
+    "build": "echo '{ \"type\": \"commonjs\" }' > dist/package.json && node build",
+    "build:watch": "pnpm build --watch",
+    "clean": "rm -rf dist && rm -rf esm",
+    "prepare": "pnpm build",
+    "prebuild": "pnpm typeGen",
+    "typeGen": "tsc --emitDeclarationOnly || true",
+    "typeGen:watch": "pnpm typeGen --watch"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.29.0",
@@ -29,7 +44,6 @@
     "near-api-js": "^5.0.1"
   },
   "devDependencies": {
-    "vite-plugin-dts": "^4.2.4",
-    "vite-plugin-node-polyfills": "^0.22.0"
+    "esbuild": "^0.24.0"
   }
 }
