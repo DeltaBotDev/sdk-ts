@@ -8,6 +8,8 @@ import {
 import Big from 'big.js';
 import { pairServices } from '@/services/token';
 import { globalState } from '@/stores';
+import type { BotModel } from '../types/bot';
+import { Chain } from '../types/contract';
 
 export interface NewToken extends BotModel.Token {
   refreshTime?: number;

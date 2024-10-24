@@ -2,7 +2,7 @@
 
 import LoadMore from '@/components/LoadMore';
 import { useRequest } from '@/hooks/useHooks';
-import DeltaTradeSDK from '@delta-trade/core';
+import DeltaTradeSDK, { MarketDCAVault } from '@delta-trade/core';
 import {
   getKeyValue,
   Table,
@@ -60,7 +60,7 @@ function DCAVaults() {
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [list, setList] = useState<Awaited<ReturnType<typeof sdk.getMarketDCAVaults>>['list']>([]);
+  const [list, setList] = useState<MarketDCAVault[]>([]);
   const [hasMore, setHasMore] = useState(false);
 
   const { loading } = useRequest(

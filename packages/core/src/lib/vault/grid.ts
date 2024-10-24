@@ -4,11 +4,11 @@ import {
   botSolanaContractServices,
   GridBotContractParams,
 } from '@/services/bot/contract';
-import { pairServices } from '@/services/token';
 import { globalState } from '@/stores';
 import { parseDisplayAmount } from '@/utils/format';
 import Big from 'big.js';
 import { validateAccountId, getPair, getMinDeposit, getPairPrice } from '.';
+import { Chain } from '../../types/contract';
 
 export interface CreateGridVaultParams {
   pairId: string;

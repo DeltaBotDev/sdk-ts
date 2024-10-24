@@ -1,4 +1,4 @@
-import { SDKParams } from '@/lib';
+import { SDKParams } from '@/index';
 
 interface GlobalStateType extends SDKParams {}
 

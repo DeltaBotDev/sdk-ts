@@ -1,5 +1,7 @@
 import { TOKENS } from '@/config';
 import { globalState } from '@/stores';
+import { Chain, Token } from '../types/contract';
+import { NetworkId } from '@near-wallet-selector/core';
 
 export function getTokenMeta(symbol: string) {
   return TOKENS[symbol];

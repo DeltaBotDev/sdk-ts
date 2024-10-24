@@ -299,11 +299,11 @@ console.log('Referral URL:', referralUrl);
 - **`sdk.claimSwingVault(params)`**: Claim a swing vault.
 
   - **Parameters**: `{ botId: string }`
-  - **Returns**: `Promise<ClaimResult>`
+  - **Returns**: `Promise<Transaction[]>`
 
 - **`sdk.closeSwingVault(params)`**: Close a swing vault.
   - **Parameters**: `{ botId: string }`
-  - **Returns**: `Promise<CloseResult>`
+  - **Returns**: `Promise<Transaction[]>`
 
 ### Asset Management
 
@@ -313,7 +313,7 @@ console.log('Referral URL:', referralUrl);
 
 - **`sdk.withdrawAccountAsset(params)`**: Withdraw an account asset.
   - **Parameters**: `{ assetId: string, amount: number }`
-  - **Returns**: `Promise<WithdrawResult>`
+  - **Returns**: `Promise<Transaction[]>`
 
 ### Referral
 

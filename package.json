@@ -1,6 +1,6 @@
 {
   "name": "delta-sdk",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Delta Trade SDK",
   "main": "index.js",
   "scripts": {

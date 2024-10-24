@@ -13,6 +13,8 @@ import { getTokenByAddress } from '@/utils/token';
 import dayjs from '@/utils/dayjs';
 import { DCA_PRICE_DECIMALS } from './contract';
 import { globalState } from '@/stores';
+import type { BotModel } from '../../types/bot';
+import { Chain } from '../../types/contract';
 
 interface BotSummary {
   average_apy: string;
@@ -170,14 +172,9 @@ export const gridBotServices = {
     data?.list?.forEach((item, index) => (item.index = index + limit * (page - 1) + 1));
     return data;
   },
-  transformData<T extends BotModel.MarketBot | BotModel.Bot | LeaderBoardModel.LeaderBoard>(
-    data: T,
-    chain?: Chain,
-  ) {
+  transformData<T extends BotModel.MarketBot | BotModel.Bot>(data: T, chain?: Chain) {
     if ('type' in data && data?.type === 'grid') {
       data.type = data.grid_style || data.type;
-    } else if ('bot_type' in data && data.bot_type === 'grid') {
-      data.bot_type = data.bot_grid_style || data.bot_type;
     }
     data.chain = (data.chain?.toLowerCase() || chain || globalState.get('chain')) as Chain;
     if ('base_order_price' in data || 'quote_order_price' in data) {
@@ -233,7 +230,7 @@ export const dcaBotServices = {
           index: index + limit * (page - 1) + 1,
         }));
       }
-      return data;
+      return { list: data?.list || [], has_next_page: data?.has_next_page || false };
     } catch (error) {
       return { list: [], has_next_page: false };
     }
@@ -486,6 +483,6 @@ export const marketServices = {
         index: index + limit * (page - 1) + 1,
       }));
     }
-    return data;
+    return { list: data?.list || [], has_next_page: data?.has_next_page || false };
   },
 };

@@ -9,6 +9,7 @@ import { globalState } from '@/stores';
 import { formatNumber } from '@/utils/format';
 import Big from 'big.js';
 import { validateAccountId, getPair, getMinDeposit, getPairPrice } from '.';
+import { Chain } from '../../types/contract';
 
 /**
  * Parameters for creating a DCA vault.

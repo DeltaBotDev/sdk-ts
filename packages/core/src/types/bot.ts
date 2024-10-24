@@ -1,5 +1,7 @@
-declare namespace BotModel {
-  type BotPair = {
+import { Chain, Token } from './contract';
+
+export namespace BotModel {
+  export type BotPair = {
     id: number;
     pair_id: string;
     name: string;
@@ -14,7 +16,7 @@ declare namespace BotModel {
     support_dca?: boolean;
   };
 
-  type PairTicker = {
+  export type PairTicker = {
     pair_id: string;
     last_price: string;
     high: string;
@@ -27,11 +29,11 @@ declare namespace BotModel {
     all_quote_usd: string;
   };
 
-  type BotType = 'grid' | 'swing' | 'dca';
-  type GridBotType = 'grid' | 'swing';
-  type BotStatus = 'active' | 'expired' | 'closed';
+  export type BotType = 'grid' | 'swing' | 'dca';
+  export type GridBotType = 'grid' | 'swing';
+  export type BotStatus = 'active' | 'expired' | 'closed';
 
-  interface Token {
+  export interface Token {
     id: number;
     code: string;
     symbol: string;
@@ -42,7 +44,8 @@ declare namespace BotModel {
     volume: string;
     amount?: string;
   }
-  interface MarketGridBot {
+
+  export interface MarketGridBot {
     index: number;
     bot_id: number;
     name: string;
@@ -75,7 +78,7 @@ declare namespace BotModel {
     totalInvestmentUsd?: string;
   }
 
-  interface Investment {
+  export interface Investment {
     id: number;
     code: string;
     symbol: string;
@@ -86,12 +89,13 @@ declare namespace BotModel {
     volume: string;
   }
 
-  type MarketBot<T extends BotType = BotType> = T extends 'dca' ? DCABot : MarketGridBot;
+  export type MarketBot<T extends BotType = BotType> = T extends 'dca' ? DCABot : MarketGridBot;
 
-  type Bot<T extends BotType = BotType> = T extends 'dca' ? DCABot : GridBot;
+  export type Bot<T extends BotType = BotType> = T extends 'dca' ? DCABot : GridBot;
 
-  type GridType = 'EqOffset' | 'EqRate';
-  interface GridBot {
+  export type GridType = 'EqOffset' | 'EqRate';
+
+  export interface GridBot {
     id: number;
     account_id: string;
     name: string;
@@ -137,7 +141,7 @@ declare namespace BotModel {
     totalInvestmentUsd?: string;
   }
 
-  interface DCABot {
+  export interface DCABot {
     id: string;
     bot_id: string;
     chain: Chain;
@@ -185,13 +189,13 @@ declare namespace BotModel {
     create_token_amount: string;
   }
 
-  type BotCreateParams<T extends BotType = 'grid'> = T extends 'grid'
+  export type BotCreateParams<T extends BotType = 'grid'> = T extends 'grid'
     ? GridBotCreateParams
     : T extends 'swing'
       ? SwingBotCreateParams
       : DCABotCreateParams;
 
-  interface GridBotCreateParams
+  export interface GridBotCreateParams
     extends Pick<
       GridBot,
       'name' | 'min_price' | 'max_price' | 'grid_amount' | 'trigger_price' | 'entry_price'
@@ -204,9 +208,9 @@ declare namespace BotModel {
     stop_loss_price?: string;
   }
 
-  type TradeType = 'buy' | 'sell';
+  export type TradeType = 'buy' | 'sell';
 
-  interface SwingBotCreateParams
+  export interface SwingBotCreateParams
     extends Pick<
       GridBot,
       'name' | 'min_price' | 'max_price' | 'grid_amount' | 'trigger_price' | 'entry_price'
@@ -222,7 +226,7 @@ declare namespace BotModel {
     isReset?: boolean;
   }
 
-  interface DCABotCreateParams
+  export interface DCABotCreateParams
     extends Pick<
       DCABot,
       'name' | 'start_time' | 'single_amount_in' | 'count' | 'lowest_price' | 'highest_price'
@@ -239,10 +243,9 @@ declare namespace BotModel {
     quote_token: Token;
   }
 
-  interface GridBotOrder {
+  export interface GridBotOrder {
     index: number;
     id: number;
-    index: number;
     order_id: string;
     bot_id: number;
     account_id: string;
@@ -261,7 +264,7 @@ declare namespace BotModel {
     total: string;
   }
 
-  interface GridBotTrade {
+  export interface GridBotTrade {
     index: number;
     id: number;
     order_id: string;
@@ -277,7 +280,8 @@ declare namespace BotModel {
     price: string;
     trade_create_time: number;
   }
-  interface GridBotClaim {
+
+  export interface GridBotClaim {
     index: number;
     id: number;
     bot_id: number;
@@ -287,5 +291,5 @@ declare namespace BotModel {
     tx_hash: string;
   }
 
-  type BotDetailRecordType = 'orders' | 'trades' | 'claims';
+  export type BotDetailRecordType = 'orders' | 'trades' | 'claims';
 }

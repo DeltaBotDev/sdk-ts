@@ -35,7 +35,7 @@ const buildConfig = {
       },
     },
   ],
-  entryPoints: ['src/lib/index.ts'],
+  entryPoints: ['src/index.ts'],
   tsconfig: './tsconfig.json',
   minify: false,
   sourcemap: true,

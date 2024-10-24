@@ -8,6 +8,7 @@ import { globalState } from '@/stores';
 import { parseDisplayAmount, parseDisplayPrice } from '@/utils/format';
 import Big from 'big.js';
 import { validateAccountId, getPair, getMinDeposit, getPairPrice } from '.';
+import { Chain } from '../../types/contract';
 
 export interface CreateClassicSwingVaultParams {
   pairId: string;

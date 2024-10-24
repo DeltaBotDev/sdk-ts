@@ -1,3 +1,6 @@
+import { Chain } from '../types/contract';
+import { NetworkId } from '@near-wallet-selector/core';
+
 const NEAR_RPC_NODE_URLS: Record<string, Record<string, string>> = {
   mainnet: {
     Lava: 'https://near.lava.build',

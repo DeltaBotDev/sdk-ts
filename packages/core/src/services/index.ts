@@ -1,5 +1,6 @@
 import { getConfigs } from '@/config';
 import { globalState } from '@/stores';
+import { Chain } from '../types/contract';
 
 export { default as request } from '@/utils/request';
 

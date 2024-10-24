@@ -1,6 +1,7 @@
 import { botContractServices } from '@/services/bot/contract';
 import { pairServices } from '@/services/token';
 import { globalState } from '@/stores';
+import type { BotModel } from '../../types/bot';
 
 export function validateAccountId() {
   if (!globalState.get('accountId'))

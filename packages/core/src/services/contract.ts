@@ -23,6 +23,7 @@ import {
 } from '@solana/spl-token';
 import * as anchor from '@coral-xyz/anchor';
 import { globalState } from '@/stores';
+import { NetworkId, TokenMetadata } from '../types/contract';
 
 export const NEAR_DECIMALS = 24;
 export const NEAR_TGAS_DECIMALS = 12;

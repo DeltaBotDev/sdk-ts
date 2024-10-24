@@ -24,6 +24,8 @@ import { SOLANA_MIN_DEPOSIT } from '@/config/bot';
 import { pairServices } from '../token';
 import { globalState } from '@/stores';
 import { getConfigs } from '@/config';
+import type { BotModel } from '../../types/bot';
+import { Chain } from '../../types/contract';
 
 export type BotContractServices<T extends Chain> = T extends 'near'
   ? typeof botNearContractServices

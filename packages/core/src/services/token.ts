@@ -4,6 +4,8 @@ import { generateUrl } from '@/utils/common';
 import { parseDisplayPrice } from '@/utils/format';
 import { CHAINS, getConfigs } from '@/config';
 import { globalState } from '@/stores';
+import type { BotModel } from '../types/bot';
+import { Chain } from '../types/contract';
 
 interface PriceReport {
   contract_address: string;

@@ -1,5 +1,5 @@
 import { globalState } from '@/stores';
-import { getPairs, getPairPrices } from './pair';
+import { getPairs, getPairPrices } from './lib/pair';
 import {
   getMyGridVaults,
   getMySwingVaults,
@@ -7,10 +7,10 @@ import {
   getMarketGridVaults,
   getMarketSwingVaults,
   getMarketDCAVaults,
-} from './vaultList';
-import { getAccountAssets, withdrawAccountAsset } from './userAssets';
-import { getMarketInfo } from './market';
-import { generateReferralUrl } from './referral';
+} from './lib/vaultList';
+import { getAccountAssets, withdrawAccountAsset } from './lib/userAssets';
+import { getMarketInfo } from './lib/market';
+import { generateReferralUrl } from './lib/referral';
 import {
   validateDCAVaultParams,
   getDCAMinDeposit,
@@ -18,7 +18,7 @@ import {
   createDCAVault,
   claimDCAVault,
   closeDCAVault,
-} from './vault/dca';
+} from './lib/vault/dca';
 import {
   validateGridVaultParams,
   getGridMinDeposit,
@@ -26,26 +26,35 @@ import {
   createGridVault,
   claimGridVault,
   closeGridVault,
-} from './vault/grid';
+} from './lib/vault/grid';
 import {
   createSwingVault,
   getSwingMinDeposit,
   getSwingTotalInvestment,
   validateSwingVaultParams,
-} from './vault/swing';
+} from './lib/vault/swing';
+import type { NetworkId, Chain } from './types/contract';
 
-export type { CreateGridVaultParams } from './vault/grid';
+export type { CreateGridVaultParams } from './lib/vault/grid';
 export type {
   CreateSwingVaultParams,
   CreateClassicSwingVaultParams,
   CreatePhasedSwingVaultParams,
-} from './vault/swing';
-export type { CreateDCAVaultParams } from './vault/dca';
+} from './lib/vault/swing';
+export type { CreateDCAVaultParams } from './lib/vault/dca';
 
-export type { MyVaultsParams, MarketVaultsParams } from './vaultList';
-
-export type Chain = 'near' | 'solana';
-export type NetworkId = 'mainnet' | 'testnet';
+export type {
+  MyVaultsParams,
+  MarketVaultsParams,
+  MyGridVault,
+  MySwingVault,
+  MyDCAVault,
+  MarketDCAVault,
+  MarketGridVault,
+  MarketSwingVault,
+  MarketVaultsRes,
+  MyVaultsRes,
+} from './lib/vaultList';
 
 export interface SDKParams<ChainType extends Chain = Chain> {
   /** chain: 'near' | 'solana' */

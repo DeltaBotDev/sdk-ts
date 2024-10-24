@@ -1,5 +1,6 @@
 import { pairServices } from '@/services/token';
 import { globalState } from '@/stores';
+import type { BotModel } from '../types/bot';
 
 const filterPairs = (pairs: BotModel.BotPair[], type?: BotModel.BotType) => {
   if (!type) return pairs;

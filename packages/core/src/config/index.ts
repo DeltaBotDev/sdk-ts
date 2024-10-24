@@ -1,4 +1,5 @@
 import { globalState } from '@/stores';
+import { Chain, Token } from '../types/contract';
 import { formatFileUrl } from '@/utils/format';
 
 export const CHAINS: Chain[] = ['near', 'solana'];

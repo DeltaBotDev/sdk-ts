@@ -1,20 +1,15 @@
-declare type NetworkId = 'mainnet' | 'testnet';
-declare type Chain = 'near' | 'solana';
+export type NetworkId = 'mainnet' | 'testnet';
+export type Chain = 'near' | 'solana';
 
-declare type Transactions = {
-  near?: import('@near-wallet-selector/core').Transaction[];
-  solana?: import('@solana/web3.js').Transaction;
-};
-
-declare type TokenMetadata = {
+export type TokenMetadata = {
   name: string;
   symbol: string;
   decimals: number;
   icon: string;
 };
 
-declare namespace Token {
-  interface TokenMeta {
+export namespace Token {
+  export interface TokenMeta {
     symbol: string;
     decimals: number;
     SolanaDecimals?: number;
@@ -25,8 +20,8 @@ declare namespace Token {
   }
 }
 
-declare namespace NFT {
-  interface NFTMetadata {
+export namespace NFT {
+  export interface NFTMetadata {
     token_id: string;
     metadata: { media?: string; level: number };
   }

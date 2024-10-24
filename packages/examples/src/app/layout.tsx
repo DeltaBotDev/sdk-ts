@@ -3,6 +3,7 @@ import './globals.css';
 import ThemeProvider from '@/providers/ThemeProvider';
 import { MessageBoxProvider } from '@/providers/MessageBoxProvider';
 import WalletInfo from '@/components/wallet';
+import WalletProvider from '@/providers/WalletProvider';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -18,10 +19,12 @@ export default function RootLayout({
     <html lang="en" className="light">
       <body className={`antialiased`}>
         <ThemeProvider>
-          <MessageBoxProvider>
-            <WalletInfo />
-            <>{children}</>
-          </MessageBoxProvider>
+          <WalletProvider>
+            <MessageBoxProvider>
+              <WalletInfo />
+              <>{children}</>
+            </MessageBoxProvider>
+          </WalletProvider>
         </ThemeProvider>
       </body>
     </html>
