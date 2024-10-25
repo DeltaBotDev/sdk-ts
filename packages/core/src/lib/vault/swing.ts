@@ -9,6 +9,7 @@ import { parseDisplayAmount, parseDisplayPrice } from '@/utils/format';
 import Big from 'big.js';
 import { validateAccountId, getPair, getMinDeposit, getPairPrice } from '.';
 import { Chain } from '../../types/contract';
+import dayjs from 'dayjs';
 
 export interface CreateClassicSwingVaultParams {
   pairId: string;
@@ -295,9 +296,13 @@ async function transformSwingVaultParams<T extends SwingVaultType>(
     total_quote_investment: totalQuoteInvestment,
     pair_id: pair.pair_id,
     entry_price: entryPrice,
-    take_profit_price: undefined,
-    trigger_price: undefined,
-    stop_loss_price: undefined,
+    take_profit_price: '0',
+    trigger_price: '0',
+    stop_loss_price: '0',
+    valid_until_time: dayjs()
+      .add(params.validityPeriod || 180, 'day')
+      .valueOf()
+      .toString(),
   } as GridBotContractParams;
   return { ...formattedParams };
 }

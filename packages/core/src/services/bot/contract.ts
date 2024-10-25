@@ -181,9 +181,9 @@ export const botNearContractServices = {
               )
             : '0',
         grid_rate: grid_type === 'EqRate' ? grid_rate : 0,
-        trigger_price: parseAmount(trigger_price, BOT_PRICE_DECIMALS),
-        take_profit_price: parseAmount(take_profit_price, BOT_PRICE_DECIMALS),
-        stop_loss_price: parseAmount(stop_loss_price, BOT_PRICE_DECIMALS),
+        trigger_price: parseAmount(trigger_price, BOT_PRICE_DECIMALS) || '0',
+        take_profit_price: parseAmount(take_profit_price, BOT_PRICE_DECIMALS) || '0',
+        stop_loss_price: parseAmount(stop_loss_price, BOT_PRICE_DECIMALS) || '0',
         valid_until_time,
         slippage: Number(parseAmount(slippage, 2)),
         first_base_amount: parseAmount(first_base_amount, base_token?.decimals),

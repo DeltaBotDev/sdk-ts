@@ -262,7 +262,7 @@ export const nearContractServices = {
       method: 'storage_balance_of',
       args: { account_id: recipient },
     });
-    if (!res?.available || res.available === '0') {
+    if (!res?.available) {
       return {
         contractId: token,
         actions: [
