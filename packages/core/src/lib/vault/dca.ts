@@ -114,33 +114,33 @@ export async function createDCAVault<ChainType extends Chain>(
   return trans as ReturnType<BotContractServices<ChainType>['createDCABot']>;
 }
 
-export async function claimDCAVault<ChainType extends Chain>(params: {
-  botId: string;
-}): Promise<ReturnType<BotContractServices<ChainType>['claimDCABot']>> {
+export async function claimDCAVault<ChainType extends Chain>(
+  id: string,
+): Promise<ReturnType<BotContractServices<ChainType>['claimDCABot']>> {
   const chain = globalState.get('chain') as ChainType;
   const trans =
     chain === 'near'
-      ? botNearContractServices.claimDCABot(params.botId)
-      : botSolanaContractServices.claimDCABot(params.botId);
+      ? botNearContractServices.claimDCABot(id)
+      : botSolanaContractServices.claimDCABot(id);
   return trans as ReturnType<BotContractServices<ChainType>['claimDCABot']>;
 }
 
-export async function closeDCAVault<ChainType extends Chain>(params: {
-  botId: string;
-}): Promise<ReturnType<BotContractServices<ChainType>['closeDCABot']>> {
+export async function closeDCAVault<ChainType extends Chain>(
+  id: string,
+): Promise<ReturnType<BotContractServices<ChainType>['closeDCABot']>> {
   const chain = globalState.get('chain') as ChainType;
   const trans =
     chain === 'near'
-      ? botNearContractServices.closeDCABot(params.botId)
-      : botSolanaContractServices.closeDCABot(params.botId);
+      ? botNearContractServices.closeDCABot(id)
+      : botSolanaContractServices.closeDCABot(id);
   return trans as ReturnType<BotContractServices<ChainType>['closeDCABot']>;
 }
 
 async function transformDCAVaultParams(params: CreateDCAVaultParams) {
   const pair = await getPair(params.pairId);
   if (!pair) throw new Error('Pair not found');
-  const tokenIn = params.tradeType === 'buy' ? pair.base_token : pair.quote_token;
-  const tokenOut = params.tradeType === 'buy' ? pair.quote_token : pair.base_token;
+  const tokenIn = params.tradeType === 'buy' ? pair.quote_token : pair.base_token;
+  const tokenOut = params.tradeType === 'buy' ? pair.base_token : pair.quote_token;
   const lowestPrice =
     params.tradeType === 'buy'
       ? params.lowestPrice
@@ -156,11 +156,11 @@ async function transformDCAVaultParams(params: CreateDCAVaultParams) {
   const { totalBaseInvestment, totalQuoteInvestment } = (await getDCATotalInvestment(params)) || {};
   const formattedParams = {
     name: params.name,
-    token_in: tokenIn,
-    token_out: tokenOut,
+    token_in: tokenIn.code,
+    token_out: tokenOut.code,
     single_amount_in: params.singleAmountIn,
     start_time: params.startTime,
-    interval_time: params.intervalTime,
+    interval_time: Number(params.intervalTime),
     count: params.count,
     lowest_price: lowestPrice,
     highest_price: highestPrice,

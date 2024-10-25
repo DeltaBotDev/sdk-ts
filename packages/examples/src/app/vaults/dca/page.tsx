@@ -51,6 +51,7 @@ function MyDCAVaults() {
     { prop: 'profit_percent', label: 'Historical ROI' },
     { prop: 'status', label: 'Status' },
     { prop: 'bot_create_time', label: 'Created Time' },
+    { prop: 'action', label: 'Action' },
   ];
 
   const [page, setPage] = useState(1);
@@ -70,6 +71,16 @@ function MyDCAVaults() {
       },
     },
   );
+
+  async function handleClaim(id: string) {
+    const trans = await sdk.claimDCAVault(id);
+    await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+  }
+
+  async function handleClose(id: string) {
+    const trans = await sdk.closeDCAVault(id);
+    await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+  }
 
   return (
     <div>
@@ -92,7 +103,27 @@ function MyDCAVaults() {
         <TableBody items={list}>
           {(item) => (
             <TableRow key={item.id}>
-              {(rowKey) => <TableCell>{getKeyValue(item, rowKey)}</TableCell>}
+              {(rowKey) => (
+                <TableCell>
+                  {rowKey === 'action'
+                    ? item.status !== 'closed' && (
+                        <>
+                          <Button size="sm" onClick={() => handleClaim(item.id)}>
+                            Claim
+                          </Button>
+                          <Button
+                            variant="light"
+                            color="danger"
+                            size="sm"
+                            onClick={() => handleClose(item.id)}
+                          >
+                            Close
+                          </Button>
+                        </>
+                      )
+                    : getKeyValue(item, rowKey)}
+                </TableCell>
+              )}
             </TableRow>
           )}
         </TableBody>

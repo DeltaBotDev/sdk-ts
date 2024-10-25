@@ -191,24 +191,24 @@ async function transformGridVaultParams(params: CreateGridVaultParams) {
   return { ...formattedParams };
 }
 
-export async function claimGridVault<ChainType extends Chain>(params: {
-  botId: number;
-}): Promise<ReturnType<BotContractServices<ChainType>['claimGridBot']>> {
+export async function claimGridVault<ChainType extends Chain>(
+  id: number,
+): Promise<ReturnType<BotContractServices<ChainType>['claimGridBot']>> {
   const chain = globalState.get('chain') as ChainType;
   const trans =
     chain === 'near'
-      ? botNearContractServices.claimGridBot(params.botId)
-      : botSolanaContractServices.claimGridBot(params.botId);
+      ? botNearContractServices.claimGridBot(id)
+      : botSolanaContractServices.claimGridBot(id);
   return trans as ReturnType<BotContractServices<ChainType>['claimGridBot']>;
 }
 
-export async function closeGridVault<ChainType extends Chain>(params: {
-  botId: number;
-}): Promise<ReturnType<BotContractServices<ChainType>['closeGridBot']>> {
+export async function closeGridVault<ChainType extends Chain>(
+  id: number,
+): Promise<ReturnType<BotContractServices<ChainType>['closeGridBot']>> {
   const chain = globalState.get('chain') as ChainType;
   const trans =
     chain === 'near'
-      ? botNearContractServices.closeGridBot(params.botId)
-      : botSolanaContractServices.closeGridBot(params.botId);
+      ? botNearContractServices.closeGridBot(id)
+      : botSolanaContractServices.closeGridBot(id);
   return trans as ReturnType<BotContractServices<ChainType>['closeGridBot']>;
 }

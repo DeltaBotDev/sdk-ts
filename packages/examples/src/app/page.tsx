@@ -3,15 +3,28 @@ import Link from 'next/link';
 export default function Home() {
   const links = [
     { label: 'Market', href: '/market' },
-    { label: 'Create DCA', href: '/create-dca' },
+    { label: 'Vaults', children: [{ label: 'DCA', href: '/vaults/dca' }] },
   ];
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="p-5">
       {links.map((link) => (
-        <Link key={link.href} href={link.href} className="hover:underline hover:text-primary">
-          {link.label}
-        </Link>
+        <div key={link.label}>
+          {link.children ? (
+            <div>
+              <div className="text-sm text-default-500 py-3">{link.label}</div>
+              {link.children.map((child) => (
+                <Link key={child.href} href={child.href} className="card cursor-pointer mb-2">
+                  {child.label}
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <Link href={link.href} className="card cursor-pointer mb-2">
+              {link.label}
+            </Link>
+          )}
+        </div>
       ))}
     </div>
   );
