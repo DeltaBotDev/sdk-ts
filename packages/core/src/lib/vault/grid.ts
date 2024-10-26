@@ -188,10 +188,8 @@ async function transformGridVaultParams(params: CreateGridVaultParams) {
     take_profit_price: '0',
     trigger_price: '0',
     stop_loss_price: '0',
-    valid_until_time: dayjs()
-      .add(params.validityPeriod || 180, 'day')
-      .valueOf()
-      .toString(),
+    valid_until_time:
+      params.validityPeriod?.toString() || dayjs().add(180, 'day').valueOf().toString(),
   } as GridBotContractParams;
   return { ...formattedParams };
 }

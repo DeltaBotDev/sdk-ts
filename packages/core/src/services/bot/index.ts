@@ -52,7 +52,7 @@ export const botServices = {
       case 'dca':
         return dcaBotServices.query(params as BotQueryParams<'dca'>) as any;
       default:
-        return gridBotServices.query(params) as any;
+        return gridBotServices.query({ ...params, bot_type: type }) as any;
     }
   },
 

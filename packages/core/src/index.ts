@@ -37,6 +37,7 @@ import type { NetworkId, Chain } from './types/contract';
 
 export type { CreateGridVaultParams } from './lib/vault/grid';
 export type {
+  SwingVaultType,
   CreateSwingVaultParams,
   CreateClassicSwingVaultParams,
   CreatePhasedSwingVaultParams,

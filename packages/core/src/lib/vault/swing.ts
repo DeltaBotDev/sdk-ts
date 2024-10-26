@@ -74,15 +74,15 @@ export async function validateSwingVaultParams<T extends SwingVaultType>(
     if (_params.tradeType === 'buy') {
       if (!_params.highestBuyPrice)
         errors.highestBuyPrice = ['Highest buy price is required for buy trades'];
-      else if (new Big(_params.highestBuyPrice).lt(pairPrice)) {
-        errors.highestBuyPrice = ['Highest buy price is less than current price'];
+      else if (new Big(_params.highestBuyPrice).gt(pairPrice)) {
+        errors.highestBuyPrice = ['Highest buy price is greater than current price'];
       }
     }
     if (_params.tradeType === 'sell') {
       if (!_params.lowestSellPrice)
         errors.lowestSellPrice = ['Lowest sell price is required for sell trades'];
-      else if (new Big(_params.lowestSellPrice).gt(pairPrice)) {
-        errors.lowestSellPrice = ['Lowest sell price is greater than current price'];
+      else if (new Big(_params.lowestSellPrice).lt(pairPrice)) {
+        errors.lowestSellPrice = ['Lowest sell price is less than current price'];
       }
     }
     const maxIntervalPrice = await calculateMaxIntervalPrice('phased', _params);
@@ -232,8 +232,8 @@ export async function createSwingVault<C extends Chain, S extends SwingVaultType
   const _params = await transformSwingVaultParams(swingType, params);
   const chain = globalState.get('chain') as C;
   const trans = await (chain === 'near'
-    ? botNearContractServices.createGridBot({ ..._params, type: 'grid' })
-    : botSolanaContractServices.createGridBot({ ..._params, type: 'grid' }));
+    ? botNearContractServices.createGridBot({ ..._params, type: 'swing' })
+    : botSolanaContractServices.createGridBot({ ..._params, type: 'swing' }));
   return trans as ReturnType<BotContractServices<C>['createGridBot']>;
 }
 
@@ -299,10 +299,8 @@ async function transformSwingVaultParams<T extends SwingVaultType>(
     take_profit_price: '0',
     trigger_price: '0',
     stop_loss_price: '0',
-    valid_until_time: dayjs()
-      .add(params.validityPeriod || 180, 'day')
-      .valueOf()
-      .toString(),
+    valid_until_time:
+      params.validityPeriod?.toString() || dayjs().add(180, 'day').valueOf().toString(),
   } as GridBotContractParams;
   return { ...formattedParams };
 }

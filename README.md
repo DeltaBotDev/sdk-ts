@@ -44,6 +44,8 @@ sdk.changeEnv({
 
 ## Usage Examples
 
+For more detailed examples, please refer to the [examples directory](./packages/examples) in the repository.
+
 ### Retrieve Pairs
 
 To create a vault, you need a `pairId`. You can retrieve available pairs using the following method:
@@ -249,14 +251,14 @@ console.log('Referral URL:', referralUrl);
   - **Parameters**: `CreateDCAVaultParams`
   - **Returns**: `Promise<Transaction[]>`
 
-- **`sdk.claimDCAVault(params)`**: Claim a DCA vault.
+- **`sdk.claimDCAVault(id)`**: Claim a DCA vault.
 
-  - **Parameters**: `{ botId: string }`
-  - **Returns**: `Promise<ClaimResult>`
+  - **Parameters**: `string`
+  - **Returns**: `Promise<Transaction[]>`
 
-- **`sdk.closeDCAVault(params)`**: Close a DCA vault.
-  - **Parameters**: `{ botId: string }`
-  - **Returns**: `Promise<CloseResult>`
+- **`sdk.closeDCAVault(id)`**: Close a DCA vault.
+  - **Parameters**: `string`
+  - **Returns**: `Promise<Transaction[]>`
 
 #### Grid Vaults
 
@@ -270,14 +272,14 @@ console.log('Referral URL:', referralUrl);
   - **Parameters**: `CreateGridVaultParams`
   - **Returns**: `Promise<Transaction[]>`
 
-- **`sdk.claimGridVault(params)`**: Claim a grid vault.
+- **`sdk.claimGridVault(id)`**: Claim a grid vault.
 
-  - **Parameters**: `{ botId: string }`
-  - **Returns**: `Promise<ClaimResult>`
+  - **Parameters**: `string`
+  - **Returns**: `Promise<Transaction[]>`
 
-- **`sdk.closeGridVault(params)`**: Close a grid vault.
-  - **Parameters**: `{ botId: string }`
-  - **Returns**: `Promise<CloseResult>`
+- **`sdk.closeGridVault(id)`**: Close a grid vault.
+  - **Parameters**: `string`
+  - **Returns**: `Promise<Transaction[]>`
 
 #### Swing Vaults
 
@@ -296,13 +298,13 @@ console.log('Referral URL:', referralUrl);
   - **Parameters**: `CreatePhasedSwingVaultParams`
   - **Returns**: `Promise<Transaction[]>`
 
-- **`sdk.claimSwingVault(params)`**: Claim a swing vault.
+- **`sdk.claimSwingVault(id)`**: Claim a swing vault.
 
-  - **Parameters**: `{ botId: string }`
+  - **Parameters**: `string`
   - **Returns**: `Promise<Transaction[]>`
 
-- **`sdk.closeSwingVault(params)`**: Close a swing vault.
-  - **Parameters**: `{ botId: string }`
+- **`sdk.closeSwingVault(id)`**: Close a swing vault.
+  - **Parameters**: `string`
   - **Returns**: `Promise<Transaction[]>`
 
 ### Asset Management

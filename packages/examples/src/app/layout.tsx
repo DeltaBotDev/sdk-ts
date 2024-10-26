@@ -22,7 +22,7 @@ export default function RootLayout({
           <WalletProvider>
             <MessageBoxProvider>
               <WalletInfo />
-              <>{children}</>
+              {children}
             </MessageBoxProvider>
           </WalletProvider>
         </ThemeProvider>

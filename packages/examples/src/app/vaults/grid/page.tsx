@@ -1,10 +1,9 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import DeltaTradeSDK, { CreateDCAVaultParams, MyDCAVault } from '@delta-trade/core';
+import DeltaTradeSDK, { CreateGridVaultParams, MyGridVault } from '@delta-trade/core';
 import { useRequest } from '@/hooks/useHooks';
 import { Button, Select, SelectItem, Input, Code } from '@nextui-org/react';
-import dayjs from 'dayjs';
 import { useMessageBoxContext } from '@/providers/MessageBoxProvider';
 import LoadMore from '@/components/LoadMore';
 import {
@@ -17,7 +16,11 @@ import {
   TableRow,
 } from '@nextui-org/react';
 import { useWalletContext } from '@/providers/WalletProvider';
+import { sendTransaction } from '@/utils/sol';
+import dayjs from 'dayjs';
+import Big from 'big.js';
 
+// Initialize the SDK
 const sdk = DeltaTradeSDK.initEnv({
   chain: 'near',
   network: 'testnet',
@@ -34,23 +37,26 @@ export default function Page() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="p-5 flex flex-col gap-4">
-        <MyDCAVaults />
-        <CreateDCAVault key={currentChain} />
+        <MyGridVaults />
+        <CreateGridVault key={currentChain} />
       </div>
     </Suspense>
   );
 }
 
-function MyDCAVaults() {
+function MyGridVaults() {
   const { wallet } = useWalletContext();
 
   const columns = [
     { prop: 'index', label: '#' },
     { prop: 'name', label: 'Vault' },
-    { prop: 'side', label: 'Side' },
-    { prop: 'investmentAmount', label: 'Investment' },
-    { prop: 'profit', label: 'Profit' },
-    { prop: 'profit_percent', label: 'Historical ROI' },
+    { prop: 'pair', label: 'Pair' },
+    { prop: 'totalInvestmentUsd', label: 'Investment' },
+    { prop: 'priceRange', label: 'Price Range' },
+    { prop: 'arbitrage_profit_usd', label: 'Arbitrage Profit' },
+    { prop: 'arbitrage_apy', label: 'Arbitrage APY' },
+    { prop: 'profit_24_usd', label: '24H Arbitrage Profit' },
+    { prop: 'apy_24', label: '24H Arbitrage APY' },
     { prop: 'status', label: 'Status' },
     { prop: 'bot_create_time', label: 'Created Time' },
     { prop: 'action', label: 'Action' },
@@ -58,7 +64,7 @@ function MyDCAVaults() {
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [list, setList] = useState<MyDCAVault[]>([]);
+  const [list, setList] = useState<MyGridVault[]>([]);
   const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
@@ -66,7 +72,7 @@ function MyDCAVaults() {
   }, [wallet]);
 
   const { loading } = useRequest(
-    () => sdk.getMyDCAVaults({ orderBy: 'profit_24_usd', dir: 'desc', page, pageSize }),
+    () => sdk.getMyGridVaults({ orderBy: 'profit_24_usd', dir: 'desc', page, pageSize }),
     {
       refreshDeps: [page, wallet.accountId],
       onSuccess(res) {
@@ -78,19 +84,30 @@ function MyDCAVaults() {
     },
   );
 
-  async function handleClaim(id: string) {
-    const trans = await sdk.claimDCAVault(id);
-    await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+  const { currentChain } = useWalletContext();
+
+  async function handleClaim(id: number) {
+    const trans = await sdk.claimGridVault(id);
+    console.log('trans', trans);
+    if (currentChain === 'near') {
+      await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+    } else {
+      await sendTransaction(trans as any);
+    }
   }
 
-  async function handleClose(id: string) {
-    const trans = await sdk.closeDCAVault(id);
-    await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+  async function handleClose(id: number) {
+    const trans = await sdk.closeGridVault(id);
+    if (currentChain === 'near') {
+      await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+    } else {
+      await sendTransaction(trans as any);
+    }
   }
 
   return (
     <div>
-      <div className="text-2xl font-bold mb-4">My DCA Vaults</div>
+      <div className="text-2xl font-bold mb-4">My Grid Vaults</div>
       <Table
         bottomContent={
           hasMore && (
@@ -108,26 +125,34 @@ function MyDCAVaults() {
         </TableHeader>
         <TableBody items={list}>
           {(item) => (
-            <TableRow key={item.id}>
+            <TableRow key={item.bot_id}>
               {(rowKey) => (
                 <TableCell>
                   {rowKey === 'action'
                     ? item.status !== 'closed' && (
                         <>
-                          <Button size="sm" onClick={() => handleClaim(item.id)}>
+                          <Button size="sm" onClick={() => handleClaim(item.bot_id)}>
                             Claim
                           </Button>
                           <Button
                             variant="light"
                             color="danger"
                             size="sm"
-                            onClick={() => handleClose(item.id)}
+                            onClick={() => handleClose(item.bot_id)}
                           >
                             Close
                           </Button>
                         </>
                       )
-                    : getKeyValue(item, rowKey)}
+                    : rowKey === 'pair'
+                      ? `${item.investment_base.symbol}/${item.investment_quote.symbol}`
+                      : rowKey === 'priceRange'
+                        ? item.min_price && item.max_price
+                          ? item.min_price > item.max_price
+                            ? `${new Big(item.max_price).round(8).toString()}-${new Big(item.min_price).round(8).toString()}`
+                            : `${new Big(item.min_price).round(8).toString()}-${new Big(item.max_price).round(8).toString()}`
+                          : '-'
+                        : getKeyValue(item, rowKey)}
                 </TableCell>
               )}
             </TableRow>
@@ -138,23 +163,21 @@ function MyDCAVaults() {
   );
 }
 
-function CreateDCAVault() {
-  const createParams: CreateDCAVaultParams = {
+function CreateGridVault() {
+  const createParams: CreateGridVaultParams = {
     pairId: '',
-    tradeType: 'buy',
-    startTime: Date.now() + 1000 * 60 * 5,
-    intervalTime: 0,
-    singleAmountIn: 10,
-    count: 10,
-    name: 'test-dca-vault',
-    recommender: '',
-    lowestPrice: 0,
-    highestPrice: 0,
+    minPrice: '4',
+    maxPrice: '5',
+    gridAmount: 2,
+    quantityPreGrid: '10',
+    name: 'test-grid-vault',
+    slippage: 1,
+    validityPeriod: dayjs().add(180, 'day').valueOf(),
   };
 
   const [formData, setFormData] = useState(createParams);
 
-  const { data: pairs } = useRequest(() => sdk.getPairs({ type: 'dca' }), {
+  const { data: pairs } = useRequest(() => sdk.getPairs({ type: 'grid' }), {
     onSuccess(res) {
       if (!formData.pairId) {
         setFormData({ ...formData, pairId: res[0].pair_id });
@@ -174,31 +197,32 @@ function CreateDCAVault() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    const newValue = name === 'startTime' ? new Date(value).getTime() + 1000 * 60 * 5 : value;
-
-    setFormData({ ...formData, [name]: newValue });
+    setFormData({ ...formData, [name]: value });
   };
 
+  const { currentChain } = useWalletContext();
   const { alert, confirm } = useMessageBoxContext();
   const [loading, setLoading] = useState(false);
   async function handleCreate() {
     setLoading(true);
     try {
-      const errors = await sdk.validateDCAVaultParams(formData);
+      const errors = await sdk.validateGridVaultParams(formData);
       if (errors) {
         alert(JSON.stringify(errors), 'Invalid Parameters');
         throw new Error('Invalid Parameters');
       }
-      const trans = await sdk.createDCAVault(formData);
+      const trans = await sdk.createGridVault(formData);
       await confirm(
         <Code className="text-xs whitespace-pre-wrap break-words" size="sm">
           {JSON.stringify(trans)}
         </Code>,
-        'Create DCA Vault',
+        'Create Grid Vault',
       );
-
-      const res = await window.nearWallet?.signAndSendTransactions({ transactions: trans });
-      console.log(res);
+      if (currentChain === 'near') {
+        await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+      } else {
+        await sendTransaction(trans as any);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -208,7 +232,7 @@ function CreateDCAVault() {
 
   return (
     <div>
-      <div className="text-2xl font-bold">Create DCA Vault</div>
+      <div className="text-2xl font-bold">Create Grid Vault</div>
       <div className="p-4 max-w-sm mx-auto">
         <form className="flex flex-col gap-4 mb-4">
           <div>
@@ -231,50 +255,47 @@ function CreateDCAVault() {
               <span className="text-success-500">{pairPrices?.[formData.pairId]?.pairPrice}</span>
             </div>
           </div>
-          <Select
-            label="Trade Type"
-            name="tradeType"
-            placeholder="Select Trade Type"
-            labelPlacement="outside"
-            selectedKeys={formData.tradeType ? [formData.tradeType] : undefined}
-            onChange={handleChange}
-          >
-            <SelectItem key="buy">Buy</SelectItem>
-            <SelectItem key="sell">Sell</SelectItem>
-          </Select>
-          <Input
-            type="datetime-local"
-            name="startTime"
-            label="Start Time"
-            labelPlacement="outside"
-            placeholder="Start Time"
-            value={dayjs(formData.startTime).format('YYYY-MM-DDTHH:mm')}
-            onChange={handleChange}
-          />
-          <IntervalInput name="intervalTime" onChange={handleChange} />
+          <div className="flex items-center gap-5">
+            <Input
+              type="number"
+              name="minPrice"
+              label="Min Price"
+              labelPlacement="outside"
+              placeholder="Min Price"
+              value={formData.minPrice}
+              onChange={handleChange}
+            />
+            <Input
+              type="number"
+              name="maxPrice"
+              label="Max Price"
+              labelPlacement="outside"
+              placeholder="Max Price"
+              value={formData.maxPrice}
+              onChange={handleChange}
+            />
+          </div>
+
           <Input
             type="number"
-            name="singleAmountIn"
-            label="Single Amount In"
+            name="gridAmount"
+            label="Number of Grids"
             labelPlacement="outside"
-            placeholder="Single Amount In"
+            placeholder="Number of Grids"
+            endContent={<span className="text-default-500 text-nowrap">2-300</span>}
+            value={formData.gridAmount.toString()}
+            onChange={handleChange}
+          />
+          <Input
+            type="number"
+            name="quantityPreGrid"
+            label="Investment Per Grid"
+            labelPlacement="outside"
+            placeholder="Investment Per Grid"
             endContent={
-              <span className="text-default-500">
-                {formData.tradeType === 'buy'
-                  ? currentPair?.quote_token.symbol
-                  : currentPair?.base_token.symbol}
-              </span>
+              <span className="text-default-500 text-nowrap">{currentPair?.base_token.symbol}</span>
             }
-            value={formData.singleAmountIn.toString()}
-            onChange={handleChange}
-          />
-          <Input
-            type="number"
-            name="count"
-            label="Count"
-            labelPlacement="outside"
-            placeholder="Count"
-            value={formData.count.toString()}
+            value={formData.quantityPreGrid}
             onChange={handleChange}
           />
           <Input
@@ -286,86 +307,29 @@ function CreateDCAVault() {
             onChange={handleChange}
           />
           <Input
-            name="recommender"
-            label="Recommender"
+            type="number"
+            name="slippage"
+            label="Slippage"
             labelPlacement="outside"
-            placeholder="Recommender"
-            value={formData.recommender}
+            placeholder="Slippage"
+            value={formData.slippage?.toString() || ''}
+            endContent={<span className="text-default-500 text-nowrap">%</span>}
             onChange={handleChange}
           />
           <Input
             type="number"
-            name="lowestPrice"
-            label="Lowest Price"
+            name="validityPeriod"
+            label="Validity Period"
             labelPlacement="outside"
-            placeholder="Lowest Price"
-            endContent={<span className="text-default-500">{currentPair?.quote_token.symbol}</span>}
-            value={formData.lowestPrice?.toString()}
-            onChange={handleChange}
-          />
-          <Input
-            type="number"
-            name="highestPrice"
-            label="Highest Price"
-            labelPlacement="outside"
-            placeholder="Highest Price"
-            endContent={<span className="text-default-500">{currentPair?.quote_token.symbol}</span>}
-            value={formData.highestPrice?.toString()}
+            placeholder="Validity Period"
+            value={formData.validityPeriod?.toString() || ''}
             onChange={handleChange}
           />
         </form>
         <Button fullWidth onClick={handleCreate} isLoading={loading}>
-          Create DCA Vault
+          Create Grid Vault
         </Button>
       </div>
-    </div>
-  );
-}
-
-function IntervalInput({
-  name,
-  onChange,
-}: {
-  name: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-}) {
-  const [intervalValue, setIntervalValue] = useState<number>();
-  const [intervalUnit, setIntervalUnit] = useState('minutes');
-
-  function handleChange(field: string, value: string) {
-    if (field === 'intervalValue') {
-      setIntervalValue(parseInt(value) || 0);
-    } else {
-      setIntervalUnit(value);
-    }
-    const newValue = field === 'intervalValue' ? parseInt(value) || 0 : parseInt(value);
-    const intervalTime =
-      intervalUnit === 'minutes'
-        ? newValue * 60 * 1000
-        : intervalUnit === 'hours'
-          ? newValue * 3600 * 1000
-          : newValue * 86400 * 1000;
-    onChange({ target: { name, value: intervalTime.toString() } } as any);
-  }
-
-  return (
-    <div className="flex items-center gap-4">
-      <Input
-        type="number"
-        name="intervalValue"
-        value={intervalValue?.toString()}
-        placeholder="Interval Value"
-        onValueChange={(value) => handleChange('intervalValue', value)}
-      />
-      <Select
-        name="intervalUnit"
-        selectedKeys={[intervalUnit]}
-        onSelectionChange={(value) => handleChange('intervalUnit', value.toString())}
-      >
-        <SelectItem key="minutes">Minutes</SelectItem>
-        <SelectItem key="hours">Hours</SelectItem>
-        <SelectItem key="days">Days</SelectItem>
-      </Select>
     </div>
   );
 }

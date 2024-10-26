@@ -11,52 +11,44 @@ import { globalState } from '@/stores';
 import type { BotModel } from '../types/bot';
 import { Chain } from '../types/contract';
 
-export interface NewToken extends BotModel.Token {
-  refreshTime?: number;
-}
-
-export interface AccountAssetsResponse {
-  tokens: NewToken[];
-  balanceMap: Record<string, string>;
-  totalBalancePrice: string;
-  totalInternalBalancePrice: string;
-  totalPrice: string;
-}
+export type AccountAssetsResponse = {
+  token: BotModel.Token;
+  price: string;
+  balance: string;
+  internalBalance: string;
+}[];
 
 export async function getAccountAssets(): Promise<AccountAssetsResponse> {
-  const tokens: NewToken[] = await fetchTokens();
+  const tokens = await fetchTokens();
   const balanceMap = await fetchBalances(tokens);
   const internalBalanceMap = await fetchInternalBalances(tokens);
   const priceMap = (await pairServices.queryPrice()) || {};
 
-  const totalBalancePrice = calculateTotalPrice(balanceMap, priceMap);
-  const totalInternalBalancePrice = calculateTotalPrice(internalBalanceMap, priceMap);
-  const totalPrice = new Big(totalBalancePrice).plus(totalInternalBalancePrice).toString();
+  const assetList = tokens.map((token) => ({
+    token,
+    price: priceMap[token.code] || '0',
+    balance: balanceMap[token.code] || '0',
+    internalBalance: internalBalanceMap[token.code] || '0',
+  }));
 
-  return {
-    tokens,
-    balanceMap,
-    totalBalancePrice,
-    totalInternalBalancePrice,
-    totalPrice,
-  };
+  return assetList;
 }
 
 export async function withdrawAccountAsset<ChainType extends Chain>(
-  token: NewToken,
+  tokenAddress: string,
 ): Promise<ReturnType<BotContractServices<ChainType>['withdraw']>> {
   const chain = globalState.get('chain');
   const trans =
     chain === 'near'
-      ? botNearContractServices.withdraw(token.code)
-      : botSolanaContractServices.withdraw(token.code);
+      ? botNearContractServices.withdraw(tokenAddress)
+      : botSolanaContractServices.withdraw(tokenAddress);
   return trans as ReturnType<BotContractServices<ChainType>['withdraw']>;
 }
 
-async function fetchTokens(): Promise<NewToken[]> {
+async function fetchTokens(): Promise<BotModel.Token[]> {
   const res = await pairServices.query();
   return (
-    res?.reduce((acc: NewToken[], cur) => {
+    res?.reduce((acc: BotModel.Token[], cur) => {
       if (!acc.some((item) => item.code === cur.base_token.code)) acc.push(cur.base_token);
       if (!acc.some((item) => item.code === cur.quote_token.code)) acc.push(cur.quote_token);
       return acc;
@@ -64,7 +56,7 @@ async function fetchTokens(): Promise<NewToken[]> {
   );
 }
 
-async function fetchBalances(tokens: NewToken[]): Promise<Record<string, string>> {
+async function fetchBalances(tokens: BotModel.Token[]): Promise<Record<string, string>> {
   const res = await Promise.all(
     tokens.map(async (token) => {
       const balance = await contractServices.getBalance(token.code);
@@ -80,7 +72,7 @@ async function fetchBalances(tokens: NewToken[]): Promise<Record<string, string>
   );
 }
 
-async function fetchInternalBalances(tokens: NewToken[]): Promise<Record<string, string>> {
+async function fetchInternalBalances(tokens: BotModel.Token[]): Promise<Record<string, string>> {
   const res = await Promise.all(
     tokens.map(async (token) => {
       const balance = await botContractServices.queryUserBalance(token.code, token.decimals);

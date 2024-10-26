@@ -1,6 +1,6 @@
 'use client';
 import useNearWallet from '@/hooks/useNearWallet';
-import React, { useMemo, createContext, useContext, useEffect, useState } from 'react';
+import React, { useMemo, createContext, useContext, useEffect } from 'react';
 import {
   ConnectionProvider,
   WalletProvider as _SolanaWalletProvider,
@@ -9,8 +9,11 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import useSolanaWallet, { setupSolanaWallet } from '@/hooks/useSolanaWallet';
 import '@near-wallet-selector/modal-ui/styles.css';
 import '@solana/wallet-adapter-react-ui/styles.css';
+import { useStorageState } from '@/hooks/useHooks';
 
 type WalletContextExposes = {
+  currentChain: 'near' | 'solana';
+  setCurrentChain: (chain: 'near' | 'solana') => void;
   near: ReturnType<typeof useNearWallet>;
   solana: ReturnType<typeof useSolanaWallet>;
 };
@@ -18,9 +21,15 @@ type WalletContextExposes = {
 const WalletContext = createContext<WalletContextExposes>({} as WalletContextExposes);
 
 export default function WalletProvider({ children }: { children: React.ReactNode }) {
+  const [currentChain, setCurrentChain] = useStorageState<'near' | 'solana'>(
+    'currentChain',
+    'near',
+  );
   const nearWalletHook = useNearWallet();
 
   const exposes = {
+    currentChain,
+    setCurrentChain,
     near: nearWalletHook,
   } as WalletContextExposes;
 
@@ -48,8 +57,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
 }
 
 export function useWalletContext() {
-  const [currentChain, setCurrentChain] = useState<'near' | 'solana'>('near');
-  const walletHooks = useContext(WalletContext);
+  const { currentChain, ...walletHooks } = useContext(WalletContext);
   const solanaWalletHooks = useSolanaWallet();
 
   useEffect(() => {
@@ -69,7 +77,6 @@ export function useWalletContext() {
     ...walletHooks,
     solana: solanaWalletHooks,
     currentChain,
-    setCurrentChain,
     wallet,
   };
 }
