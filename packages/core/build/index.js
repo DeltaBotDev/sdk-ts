@@ -7,11 +7,8 @@ const isWatching = process.argv.includes('--watch');
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 const buildConfig = {
-  banner: {
-    js: '"use client";',
-  },
   bundle: true,
-  platform: 'browser',
+  platform: 'neutral',
   target: 'es2015',
   loader: {
     '.png': 'dataurl',
@@ -40,7 +37,8 @@ const buildConfig = {
   minify: false,
   sourcemap: true,
   define: {
-    'process.env.NODE_ENV': '"production"',
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    'process.env.RUNTIME_ENV': JSON.stringify(process.env.RUNTIME_ENV || 'any'),
   },
   external: [],
 };
@@ -50,6 +48,7 @@ const getConfig = (format, outdir, splitting) => ({
   format,
   outdir,
   splitting,
+  platform: 'neutral',
 });
 
 const buildESM = build(getConfig('esm', 'esm', true));

@@ -1,6 +1,6 @@
 {
   "name": "@delta-trade/core",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publishConfig": {
     "access": "public"
   },
@@ -10,9 +10,9 @@
     "url": "https://github.com/DeltaBotDev/sdk-ts.git"
   },
   "type": "module",
-  "main": "dist/index.js",
-  "module": "esm/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./esm/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "esm"
@@ -21,7 +21,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./esm/index.js",
-      "require": "./dist/index.js"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "sideEffects": false,
@@ -33,7 +34,8 @@
     "prepare": "pnpm build",
     "prebuild": "pnpm typeGen",
     "typeGen": "tsc --emitDeclarationOnly || true",
-    "typeGen:watch": "pnpm typeGen --watch"
+    "typeGen:watch": "pnpm typeGen --watch",
+    "pub": "npm publish"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.29.0",
