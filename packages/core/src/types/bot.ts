@@ -11,9 +11,31 @@ export namespace BotModel {
     ticker: PairTicker;
     is_main: boolean;
     is_meme: boolean;
+    is_mining: boolean;
+    is_warn: boolean;
     chain: Chain;
     support_grid?: boolean;
     support_dca?: boolean;
+    types?: BotType[];
+    apy_daily: number;
+    apy_daily_bot_id: number;
+    apy_monthly: number;
+    apy_monthly_bot_id: number;
+    apy_weekly: number;
+    apy_weekly_bot_id: number;
+    change: string;
+    liquidity: number;
+    market_cap: number;
+    market_cap_volume: number;
+    pair_db_id: number;
+    // price: string;
+    pair_price: string;
+    ranking: number;
+    type: string;
+    vaults: number;
+    volatility: number;
+    volume_24h: number;
+    volume_total: number;
   };
 
   export type PairTicker = {

@@ -34,6 +34,7 @@ import {
   validateSwingVaultParams,
 } from './lib/vault/swing';
 import type { NetworkId, Chain } from './types/contract';
+import { BotModel } from './types/bot';
 
 export type { CreateGridVaultParams } from './lib/vault/grid';
 export type {
@@ -75,6 +76,8 @@ export interface SDKParams<ChainType extends Chain = Chain> {
     endpoint?: string;
   };
 }
+
+export type VaultType = BotModel.BotType;
 
 export default class DeltaTradeSDK<ChainType extends Chain = Chain> {
   constructor({ chain, network, accountId, nearConfig, solanaConfig }: SDKParams<ChainType>) {

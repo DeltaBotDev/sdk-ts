@@ -6,11 +6,13 @@ import { CHAINS, getConfigs } from '@/config';
 import { globalState } from '@/stores';
 import type { BotModel } from '../types/bot';
 import { Chain } from '../types/contract';
+import dayjs from '@/utils/dayjs';
 
-interface PriceReport {
-  contract_address: string;
-  symbol: string;
-  price_list: { date_time: number; price: string }[];
+export interface PairPrice {
+  pair_id: string;
+  basePrice: string;
+  quotePrice: string;
+  pairPrice: string;
 }
 
 export interface KlineItem {
@@ -22,10 +24,8 @@ export interface KlineItem {
 }
 
 export const pairServices = {
-  pairs: {} as Record<Chain, BotModel.BotPair[]>,
-  async queryAll() {
-    if (CHAINS.every((chain) => this.pairs[chain]?.length)) return this.pairs;
-    const res = await Promise.all(CHAINS.map((chain) => this.query(chain)));
+  async queryAll(cacheTimeout = 30000) {
+    const res = await Promise.all(CHAINS.map((chain) => this.query(chain, cacheTimeout)));
     return res.reduce(
       (acc, cur, i) => {
         acc[CHAINS[i]] = cur;
@@ -34,40 +34,38 @@ export const pairServices = {
       {} as Record<Chain, BotModel.BotPair[]>,
     );
   },
-  async query(chain = globalState.get('chain')) {
-    if (this.pairs[chain]?.length) return this.pairs[chain];
-    if (this.pairs[chain]?.length) return this.pairs[chain];
+  async query(chain = globalState.get('chain'), cacheTimeout = 30000) {
     const { data } = await request<WrapperResponse<BotModel.BotPair[]>>(
-      botInnerApiPrefix('/bot/grid/pairs', chain),
-    ).catch(() => ({ data: [] }));
-    data?.forEach((item) => {
-      item.symbol = `${item.base_token.symbol}_${item.quote_token.symbol}`;
-      item.chain = chain;
-    });
-    this.pairs[chain] = data || [];
-    return data || [];
+      generateUrl(botInnerApiPrefix('/pair/list', chain), { type: 'all' }),
+      { cacheTimeout },
+    );
+    return (
+      data?.map((item) => {
+        const symbol = `${item.base_token.symbol}_${item.quote_token.symbol}`;
+        const types: BotModel.BotType[] = [];
+        if (item.support_grid) types.push('grid', 'swing');
+        if (item.support_dca) types.push('dca');
+        if (!item.support_grid && !item.support_dca) types.push('grid', 'swing', 'dca');
+        return {
+          ...item,
+          symbol,
+          types,
+          chain,
+        };
+      }) || []
+    );
   },
 
   async queryPairPrice(pair_id: string | string[]) {
     const ids: string[] = Array.isArray(pair_id) ? pair_id : [pair_id];
+    const pairs = await this.query();
     const prices = await this.queryPrice();
-    const result = {} as Record<
-      string,
-      {
-        pair_id: string;
-        basePrice: string;
-        quotePrice: string;
-        pairPrice: string;
-      }
-    >;
+    const result = {} as Record<string, PairPrice>;
     ids.map((id) => {
       const [baseToken, quoteToken] = id.split(':');
       const basePrice = prices?.[baseToken] || '0';
       const quotePrice = prices?.[quoteToken] || '0';
-      const pairPrice = parseDisplayPrice(
-        Number(basePrice) / Number(quotePrice),
-        getTokenByAddress(baseToken)?.symbol!,
-      );
+      const pairPrice = pairs.find((p) => p.pair_id === id)?.pair_price || '0';
       result[id] = { pair_id: id, basePrice, quotePrice, pairPrice };
     });
     return result;
@@ -83,44 +81,27 @@ export const pairServices = {
     );
     return data;
   },
-  tickers: {} as Record<string, BotModel.PairTicker>,
   async queryTicker(pair_id: string | string[]) {
+    if (!pair_id.length) return;
     const ids = Array.isArray(pair_id) ? pair_id : [pair_id];
-    const pairPrices = await this.queryPairPrice(ids);
-    const tickers = await Promise.all(
-      ids.map(async (id) => {
-        const { data } = await request<WrapperResponse<BotModel.PairTicker>>(
-          generateUrl(botInnerApiPrefix('/bot/grid/ticker'), { pair_id: id }),
-          { cacheTimeout: 60000 },
-        ).catch(() => ({ data: undefined }));
-        if (!data) return this.tickers[id];
-        const price = pairPrices[id].pairPrice;
-        const newData = {
-          ...data,
-          last_price: price,
-        };
-        this.tickers[id] = newData;
-        return newData;
+    // const pairPrices = await this.queryPairPrice(ids);
+    const res = await request<WrapperResponse<BotModel.PairTicker[]>>(
+      generateUrl(botInnerApiPrefix('/bot/grid/tickers'), {
+        pair_ids: ids.join(','),
       }),
     );
-    const result = tickers.reduce(
+    const tickers = res.data?.reduce(
       (acc, cur) => {
-        acc[cur.pair_id] = cur;
+        acc[cur.pair_id] = {
+          ...cur,
+          // last_price: pairPrices[cur.pair_id].pairPrice,
+        };
         return acc;
       },
       {} as Record<string, BotModel.PairTicker>,
     );
-    return result;
+    return tickers;
   },
-  async queryPriceByIndexer(symbol: string) {
-    const { price } = await request<{ price: string }>(
-      generateUrl(getConfigs().indexerHost + '/get-token-price', {
-        token_id: getTokenAddress(symbol, 'near', 'mainnet'),
-      }),
-    );
-    return price;
-  },
-
   async queryPriceReport({
     base,
     quote,
@@ -130,30 +111,19 @@ export const pairServices = {
     quote: string;
     dimension?: 'D' | 'W' | 'M' | 'Y';
   }) {
-    const { price_list } = await request<PriceReport>(
-      generateUrl(getConfigs().indexerHost + '/token-price-report', {
-        token: getTokenAddress(base, 'near', 'mainnet'),
-        base_token: getTokenAddress(quote, 'near', 'mainnet'),
-        dimension,
-      }),
-      { retryCount: 0 },
-    );
-    const res = price_list.map(({ date_time, price }) => ({
-      name: date_time,
-      value: Number(price),
-    }));
-    return res;
-  },
-  async queryHistoryPriceReport({ base, quote }: { base: string; quote: string }) {
-    const { price_list } = await request<PriceReport>(
-      generateUrl(getConfigs().indexerHost + '/history-token-price-report', {
-        token: getTokenAddress(base, 'near', 'mainnet'),
-        base_token: getTokenAddress(quote, 'near', 'mainnet'),
-      }),
-      { retryCount: 0 },
-    );
-    const res = price_list.map(({ date_time, price }) => ({
-      name: date_time,
+    const unit =
+      dimension === 'D' ? 'day' : dimension === 'W' ? 'week' : dimension === 'M' ? 'month' : 'year';
+    const params = {
+      pair_id: `${getTokenAddress(base)}:${getTokenAddress(quote)}`,
+      start: dayjs().startOf('minute').subtract(1, unit).valueOf(),
+      end: dayjs().startOf('minute').valueOf(),
+      limit: 12,
+    };
+
+    const url = generateUrl(botInnerApiPrefix('/klines'), params);
+    const { data } = await request<WrapperResponse<KlineItem[]>>(url, { cacheTimeout: 600000 });
+    const res = data?.map(({ time, price }) => ({
+      name: time,
       value: Number(price),
     }));
     return res;

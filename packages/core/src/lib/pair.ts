@@ -1,4 +1,4 @@
-import { pairServices } from '@/services/token';
+import { PairPrice, pairServices } from '@/services/token';
 import { globalState } from '@/stores';
 import type { BotModel } from '../types/bot';
 
@@ -17,7 +17,7 @@ export async function getPairs(params?: { type?: BotModel.BotType }) {
   return filterPairs(pairs, params?.type);
 }
 
-export async function getPairPrices(pairId: string[]) {
+export async function getPairPrices(pairId: string[]): Promise<Record<string, PairPrice>> {
   const res = await pairServices.queryPairPrice(pairId);
   return res;
 }

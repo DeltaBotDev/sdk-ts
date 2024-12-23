@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import DeltaTradeSDK from '@delta-trade/core';
+import DeltaTradeSDK, { VaultType } from '@delta-trade/core';
 
 // Initialize SDK
 const initSdk = () =>
@@ -11,7 +11,7 @@ const initSdk = () =>
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type') || 'dca';
+    const type = (searchParams.get('type') || 'dca') as VaultType;
     console.log('type', type);
     const sdk = initSdk();
     console.log('sdk', sdk);
