@@ -60,7 +60,10 @@ export const nearContractServices = {
     const provider = new providers.FailoverRpcProvider(jsonRpcProvider);
     return {
       networkId: network,
-      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+      keyStore:
+        typeof window !== 'undefined'
+          ? new keyStores.BrowserLocalStorageKeyStore()
+          : new keyStores.InMemoryKeyStore(),
       nodeUrl,
       provider,
       walletUrl: network === 'mainnet' ? 'https://app.near.org' : 'https://wallet.testnet.near.org',
