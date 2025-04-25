@@ -44,7 +44,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
   const { endpoint } = setupSolanaWallet();
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
+    <ConnectionProvider endpoint={endpoint!}>
       <_SolanaWalletProvider
         wallets={[]}
         autoConnect

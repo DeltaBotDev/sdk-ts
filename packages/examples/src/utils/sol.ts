@@ -17,7 +17,7 @@ export async function sendTransaction<T extends SendTransactionParams = SendTran
 ) {
   if (!window.solanaWallet) throw new Error('solana Wallet not found');
   const { connection, sendTransaction, publicKey } = window.solanaWallet!;
-  const { blockhash } = await connection.getLatestBlockhash();
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
   const transactionArray = Array.isArray(transactions) ? transactions : [transactions];
 
   const transaction = new Transaction()
@@ -29,7 +29,9 @@ export async function sendTransaction<T extends SendTransactionParams = SendTran
     .add(...transactionArray);
 
   transaction.recentBlockhash = blockhash;
+  transaction.lastValidBlockHeight = lastValidBlockHeight;
   transaction.feePayer = publicKey!;
+  console.log('sendTransaction transaction', transaction);
 
   const signature = await sendTransaction?.(transaction, connection, {
     skipPreflight: true,

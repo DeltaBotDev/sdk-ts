@@ -4,7 +4,7 @@
   "description": "Delta Trade SDK",
   "main": "index.js",
   "scripts": {
-    "dev:examples": "pnpm --filter=core build && pnpm --filter=examples dev",
+    "dev": "pnpm --filter=core build && pnpm --filter=examples dev",
     "build": "pnpm --filter=!examples build",
     "pub": "pnpm --filter=!examples pub",
     "clean": "pnpm -r run clean"

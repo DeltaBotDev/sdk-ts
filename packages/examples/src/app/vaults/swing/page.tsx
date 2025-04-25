@@ -26,8 +26,8 @@ import Big from 'big.js';
 
 // Initialize the SDK
 const sdk = DeltaTradeSDK.initEnv({
-  chain: 'near',
-  network: 'testnet',
+  chain: 'solana',
+  network: 'mainnet',
 });
 
 export default function Page() {
@@ -167,12 +167,13 @@ function CreateSwingVault() {
   const [swingType, setSwingType] = useState<SwingVaultType>('classic');
 
   const classicParams: CreateSwingVaultParams<'classic'> = {
-    pairId: '',
-    tradeType: 'buy',
-    buyPrice: '4',
-    sellPrice: '5',
-    everyPhasedAmount: '10',
-    name: 'test-swing-vault',
+    pairId:
+      'So11111111111111111111111111111111111111112:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    tradeType: 'sell',
+    buyPrice: '130',
+    sellPrice: '180',
+    everyPhasedAmount: '0.2',
+    name: 'SOL/USDC Swing',
     validityPeriod: dayjs().add(180, 'day').valueOf(),
     slippage: 1,
   };

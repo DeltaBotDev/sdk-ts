@@ -1,7 +1,6 @@
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useEffect, useMemo } from 'react';
-import { clusterApiUrl } from '@solana/web3.js';
 
 declare global {
   interface Window {
@@ -17,9 +16,9 @@ type SolanaWallet = ReturnType<typeof useConnection> &
   };
 
 export function setupSolanaWallet() {
-  const network = 'devnet';
+  const network = 'mainnet-beta';
 
-  const endpoint = clusterApiUrl(network);
+  const endpoint = process.env.NEXT_PUBLIC_SOL_RPC;
 
   return { network, endpoint };
 }

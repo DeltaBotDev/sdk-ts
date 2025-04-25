@@ -90,6 +90,8 @@ export type GridInfo = Partial<GridBotContractParams> & {
 
 export const BOT_PRICE_DECIMALS = 18;
 export const DCA_PRICE_DECIMALS = 10;
+const nearRecommender = 'deltareceive.near';
+const solanaRecommender = 'A7bpVjH6xi2w27zctD6cnBL2Y8HCu1678aNRrhDTBLFD';
 
 export const botContractServices = {
   async queryMinDeposit(botType: BotModel.BotType, token: BotModel.Token) {
@@ -196,7 +198,7 @@ export const botNearContractServices = {
         fill_base_or_quote,
         grid_buy_count,
         grid_sell_count,
-        recommender,
+        recommender: recommender || nearRecommender,
       };
 
       const baseTokenBotRegisterTransaction = await this.getTokenBotRegisterTransaction(
@@ -291,7 +293,7 @@ export const botNearContractServices = {
         highest_price: Number(parseAmount(highest_price, DCA_PRICE_DECIMALS)),
         slippage: Number(parseAmount(slippage, 2)),
         name,
-        recommender,
+        recommender: recommender || nearRecommender,
       };
 
       const baseTokenRegisterTransaction = await this.getTokenBotRegisterTransaction(
@@ -524,7 +526,6 @@ export const botSolanaContractServices = {
       type: BotModel.GridBotType;
     },
   ) {
-    console.log('createGridBot params', params);
     const baseTokenDecimals = getTokenDecimals(params.base_token.symbol, 'solana');
     const quoteTokenDecimals = getTokenDecimals(params.quote_token.symbol, 'solana');
     const {
@@ -582,6 +583,27 @@ export const botSolanaContractServices = {
       total_quote_investment: parseAmount(params.total_quote_investment, quoteTokenDecimals),
     };
 
+    console.log('createGridBot params', {
+      name,
+      grid_type,
+      grid_rate,
+      grid_offset,
+      first_base_amount: first_base_amount.toString(),
+      first_quote_amount: first_quote_amount.toString(),
+      last_base_amount: last_base_amount.toString(),
+      last_quote_amount: last_quote_amount.toString(),
+      fill_base_or_quote,
+      valid_until_time: valid_until_time.toString(),
+      entry_price: entry_price.toString(),
+      base_token,
+      quote_token,
+      total_base_investment: total_base_investment.toString(),
+      total_quote_investment: total_quote_investment.toString(),
+      grid_buy_count,
+      grid_sell_count,
+      recommender,
+    });
+
     const userPublicKey = new PublicKey(globalState.get('accountId')!);
     if (!userPublicKey) return Promise.reject('No user public key');
 
@@ -622,7 +644,42 @@ export const botSolanaContractServices = {
       ],
       program.programId,
     );
+    console.log('createBotInstruction params', {
+      name,
+      grid_type,
+      grid_rate,
+      grid_offset: grid_offset?.toString(),
+      first_base_amount: first_base_amount.toString(),
+      first_quote_amount: first_quote_amount.toString(),
+      last_base_amount: last_base_amount.toString(),
+      last_quote_amount: last_quote_amount.toString(),
+      fill_base_or_quote,
+      valid_until_time: valid_until_time.toString(),
+      entry_price: entry_price.toString(),
+      recommender: recommender || solanaRecommender,
+    });
 
+    console.log('createBotInstruction account', {
+      gridBotState: gridBotState.toBase58(),
+      userState: userStatePDA.toBase58(),
+      baseMint: baseTokenPublicKey.toBase58(),
+      quoteMint: quoteTokenPublicKey.toBase58(),
+      pair: pairPDA.toBase58(),
+      gridBot: gridBotPDA.toBase58(),
+      globalBalanceBaseUser: baseGlobalBalanceInfo.user.toBase58(),
+      globalBalanceBase: baseGlobalBalanceInfo.tokenAccount.toBase58(),
+      globalBalanceQuoteUser: quoteGlobalBalanceInfo.user.toBase58(),
+      globalBalanceQuote: quoteGlobalBalanceInfo.tokenAccount.toBase58(),
+      depositLimitBase: baseDepositLimitAccountPDA.toBase58(),
+      depositLimitQuote: quoteDepositLimitAccountPDA.toBase58(),
+      userBaseTokenAccount: userBaseTokenAccount.toBase58(),
+      userQuoteTokenAccount: userQuoteTokenAccount.toBase58(),
+      tokenProgram: TOKEN_PROGRAM_ID.toBase58(),
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID.toBase58(),
+      referralRecord: referralRecordPDA.toBase58(),
+      user: userPublicKey.toBase58(),
+      systemProgram: anchor.web3.SystemProgram.programId.toBase58(),
+    });
     const createBotInstruction = program.methods
       .createBot(
         name,
@@ -636,7 +693,7 @@ export const botSolanaContractServices = {
         fill_base_or_quote,
         valid_until_time,
         entry_price,
-        recommender ? new PublicKey(recommender) : null,
+        new PublicKey(recommender || solanaRecommender),
       )
       .accounts({
         gridBotState: gridBotState,
@@ -686,6 +743,8 @@ export const botSolanaContractServices = {
       createBotAccountTransaction,
       createBotTransaction,
     ].filter(Boolean) as anchor.web3.TransactionInstruction[];
+
+    console.log('createGridBot transactions', transactions);
 
     return transactions;
   },

@@ -288,6 +288,7 @@ export const solanaContractServices = {
     const endPoint =
       globalState.get('solanaConfig')?.endpoint ||
       Object.values(getRPCNodeUrls('solana', network))[0];
+    console.log('endPoint', endPoint, network);
     const connection = new solanaConnection(endPoint, { commitment: 'confirmed' });
     this.solana[network] = connection;
     return connection;

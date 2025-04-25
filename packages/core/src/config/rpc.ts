@@ -17,8 +17,8 @@ const NEAR_RPC_NODE_URLS: Record<string, Record<string, string>> = {
 
 const SOLANA_RPC_NODE_URLS: Record<string, Record<string, string>> = {
   mainnet: {
-    Delta: 'https://solana.deltarpc.com/',
     XNFT: 'https://swr.xnftdata.com/rpc-proxy/',
+    Delta: 'https://solana.deltarpc.com/',
     // Chainstack: 'https://solana-mainnet.core.chainstack.com/ed9e4c2d2237fa74cb0a4d61fa07cf79',
   },
   testnet: {
