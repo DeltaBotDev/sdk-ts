@@ -27,7 +27,6 @@ export default function Page() {
   const { wallet, currentChain } = useWalletContext();
 
   useEffect(() => {
-    console.log('changeEnv', currentChain, wallet.accountId);
     sdk.changeEnv({ chain: currentChain, accountId: wallet.accountId });
   }, [wallet.accountId, currentChain]);
 
@@ -61,11 +60,7 @@ function MyDCAVaults() {
   const [list, setList] = useState<MyDCAVault[]>([]);
   const [hasMore, setHasMore] = useState(false);
 
-  useEffect(() => {
-    console.log('wallet', wallet);
-  }, [wallet]);
-
-  const { loading } = useRequest(
+  const { loading, run } = useRequest(
     () => sdk.getMyDCAVaults({ orderBy: 'profit_24_usd', dir: 'desc', page, pageSize }),
     {
       refreshDeps: [page, wallet.accountId],
@@ -90,7 +85,12 @@ function MyDCAVaults() {
 
   return (
     <div>
-      <div className="text-2xl font-bold mb-4">My DCA Vaults</div>
+      <div className="flex items-center justify-between">
+        <div className="text-2xl font-bold mb-4">My DCA Vaults</div>
+        <Button isLoading={loading} color="primary" variant="light" size="sm" onClick={() => run()}>
+          refresh
+        </Button>
+      </div>
       <Table
         bottomContent={
           hasMore && (
@@ -157,7 +157,7 @@ function CreateDCAVault() {
   const { data: pairs } = useRequest(() => sdk.getPairs({ type: 'dca' }), {
     onSuccess(res) {
       if (!formData.pairId) {
-        setFormData({ ...formData, pairId: res[0].pair_id });
+        setFormData({ ...formData, pairId: res?.[0]?.pair_id });
       }
     },
   });

@@ -5,11 +5,11 @@ import {
   GridBotContractParams,
 } from '@/services/bot/contract';
 import { globalState } from '@/stores';
-import { parseDisplayAmount, parseDisplayPrice } from '@/utils/format';
 import Big from 'big.js';
 import { validateAccountId, getPair, getMinDeposit, getPairPrice } from '.';
 import { Chain } from '../../types/contract';
 import dayjs from 'dayjs';
+import { safeBig, safeBigMax } from '@/utils/big';
 
 export interface CreateClassicSwingVaultParams {
   pairId: string;
@@ -214,13 +214,14 @@ export async function getSwingMinDeposit<T extends SwingVaultType>(
       ? minPrice
       : maxPrice;
 
-  if (new Big(price || 0).eq(0)) return minBaseDeposit.toString() || '0';
-  const result = Math.max(
-    Number(minBaseDeposit || '0'),
-    new Big(minQuoteDeposit || '0').div(price || 1).toNumber(),
+  const value = safeBigMax(
+    minBaseDeposit,
+    safeBig(minQuoteDeposit)
+      .div(price || 1)
+      .round(8, Big.roundUp)
+      .toFixed(),
   );
-  const pair = await getPair(params.pairId);
-  return parseDisplayAmount(result, pair?.base_token.symbol!, { rm: Big.roundUp });
+  return value;
 }
 
 export async function createSwingVault<C extends Chain, S extends SwingVaultType>(
@@ -245,16 +246,11 @@ async function calculateMaxIntervalPrice<T extends SwingVaultType>(
   const pair = await getPair(params.pairId);
   if (!pair) throw new Error('Pair not found');
   if (tradeType === 'buy') {
-    return maxPrice
-      ? parseDisplayPrice(
-          new Big(maxPrice)
-            .minus(new Big(10).pow(-+(pair.base_token.decimals || 2)))
-            .div(gridAmount)
-            .toString(),
-          pair.base_token.symbol!,
-          { rm: Big.roundDown },
-        )
-      : 0;
+    return safeBig(maxPrice)
+      .minus(new Big(10).pow(-+(pair.base_token.decimals || 2)))
+      .div(gridAmount)
+      .round(8, Big.roundDown)
+      .toFixed();
   } else {
     return minPrice;
   }

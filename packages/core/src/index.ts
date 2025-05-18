@@ -35,6 +35,13 @@ import {
 } from './lib/vault/swing';
 import type { NetworkId, Chain } from './types/contract';
 import { BotModel } from './types/bot';
+import {
+  initTokens,
+  getTokenBySymbol,
+  getTokenByAddress,
+  getTokensByChain,
+  getTokensBySymbol,
+} from './stores/tokens';
 
 export type { CreateGridVaultParams } from './lib/vault/grid';
 export type {
@@ -58,6 +65,8 @@ export type {
   MyVaultsRes,
 } from './lib/vaultList';
 
+export type { Chain, NetworkId };
+
 export interface SDKParams<ChainType extends Chain = Chain> {
   /** chain: 'near' | 'solana' */
   chain: ChainType;
@@ -79,13 +88,56 @@ export interface SDKParams<ChainType extends Chain = Chain> {
 
 export type VaultType = BotModel.BotType;
 
+class TokensInitializer {
+  private static instance: TokensInitializer;
+  private initPromise: Promise<void> | null = null;
+
+  private constructor() {}
+
+  public static getInstance(): TokensInitializer {
+    if (!TokensInitializer.instance) {
+      TokensInitializer.instance = new TokensInitializer();
+    }
+    return TokensInitializer.instance;
+  }
+
+  public initialize(): Promise<void> {
+    if (!this.initPromise) {
+      this.initPromise = initTokens().catch((err) => {
+        console.error('Error initializing tokens:', err);
+        this.initPromise = null;
+        throw err;
+      });
+    }
+    return this.initPromise;
+  }
+
+  public reset(): void {
+    this.initPromise = null;
+  }
+
+  public getPromise(): Promise<void> | null {
+    return this.initPromise;
+  }
+}
+
 export default class DeltaTradeSDK<ChainType extends Chain = Chain> {
+  private initialized: boolean = false;
+  private tokensInitializer: TokensInitializer;
+
   constructor({ chain, network, accountId, nearConfig, solanaConfig }: SDKParams<ChainType>) {
     globalState.set('chain', chain);
     globalState.set('network', network);
     globalState.set('accountId', accountId);
     globalState.set('nearConfig', nearConfig);
     globalState.set('solanaConfig', solanaConfig);
+
+    this.initialized = true;
+    this.tokensInitializer = TokensInitializer.getInstance();
+
+    this.tokensInitializer.initialize().catch(() => {
+      this.initialized = false;
+    });
   }
 
   /**
@@ -95,53 +147,113 @@ export default class DeltaTradeSDK<ChainType extends Chain = Chain> {
   public static initEnv<ChainType extends Chain>(
     params: SDKParams<ChainType>,
   ): DeltaTradeSDK<ChainType> {
-    return new DeltaTradeSDK(params);
+    const sdk = new DeltaTradeSDK(params);
+    return sdk;
   }
 
   public changeEnv(params: Partial<SDKParams<Chain>>) {
     if (params.chain) globalState.set('chain', params.chain);
     if (params.network) globalState.set('network', params.network);
     if (params.accountId) globalState.set('accountId', params.accountId);
+
+    this.tokensInitializer.reset();
+    this.initTokens();
   }
 
-  public getPairs = getPairs;
-  public getPairPrices = getPairPrices;
+  /**
+   * Ensures tokens are initialized before executing operations
+   */
+  private async ensureTokensInitialized(): Promise<void> {
+    try {
+      await this.tokensInitializer.initialize();
+      this.initialized = true;
+    } catch (error) {
+      this.initialized = false;
+      throw error;
+    }
+  }
 
-  public validateGridVaultParams = validateGridVaultParams;
-  public getGridMinDeposit = getGridMinDeposit;
-  public getGridTotalInvestment = getGridTotalInvestment;
-  public createGridVault = createGridVault<ChainType>;
+  /**
+   * Wraps a method to ensure tokens are initialized before execution
+   * Used for all data fetching methods that require tokens data
+   */
+  private withTokensInit<T extends (...args: any[]) => any>(
+    fn: T,
+  ): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>>> {
+    return async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> => {
+      await this.ensureTokensInitialized();
+      const result = await fn(...args);
+      return result;
+    };
+  }
 
-  public validateSwingVaultParams = validateSwingVaultParams;
-  public getSwingMinDeposit = getSwingMinDeposit;
-  public getSwingTotalInvestment = getSwingTotalInvestment;
-  public createClassicSwingVault = createSwingVault<ChainType, 'classic'>;
-  public createPhasedSwingVault = createSwingVault<ChainType, 'phased'>;
+  /**
+   * Manually initialize or refresh token data
+   */
+  public async initTokens() {
+    this.initialized = true;
+    try {
+      this.tokensInitializer.reset();
+      await this.tokensInitializer.initialize();
+      return true;
+    } catch (error) {
+      this.initialized = false;
+      console.error('Failed to initialize tokens:', error);
+      return false;
+    }
+  }
 
-  public validateDCAVaultParams = validateDCAVaultParams;
-  public getDCAMinDeposit = getDCAMinDeposit;
-  public getDCATotalInvestment = getDCATotalInvestment;
-  public createDCAVault = createDCAVault<ChainType>;
+  /**
+   * Check if tokens are initialized
+   */
+  public isInitialized() {
+    return this.initialized;
+  }
 
-  public claimGridVault = claimGridVault<ChainType>;
-  public claimSwingVault = claimGridVault<ChainType>;
-  public claimDCAVault = claimDCAVault<ChainType>;
+  // Token methods - all require token initialization
+  public getTokens = this.withTokensInit(getTokensByChain);
+  public getTokenBySymbol = this.withTokensInit(getTokenBySymbol);
+  public getTokenByAddress = this.withTokensInit(getTokenByAddress);
+  public getTokensBySymbol = this.withTokensInit(getTokensBySymbol);
 
-  public closeGridVault = closeGridVault<ChainType>;
-  public closeSwingVault = closeGridVault<ChainType>;
-  public closeDCAVault = closeDCAVault<ChainType>;
-
-  public getMyGridVaults = getMyGridVaults;
-  public getMySwingVaults = getMySwingVaults;
-  public getMyDCAVaults = getMyDCAVaults;
-  public getMarketGridVaults = getMarketGridVaults;
-  public getMarketSwingVaults = getMarketSwingVaults;
-  public getMarketDCAVaults = getMarketDCAVaults;
-
-  public getMarketInfo = getMarketInfo;
-
-  public getAccountAssets = getAccountAssets;
+  // General methods - only get methods need tokens
+  public getPairs = this.withTokensInit(getPairs);
+  public getPairPrices = this.withTokensInit(getPairPrices);
+  public getMarketInfo = this.withTokensInit(getMarketInfo);
+  public getAccountAssets = this.withTokensInit(getAccountAssets);
   public withdrawAccountAsset = withdrawAccountAsset;
-
   public generateReferralUrl = generateReferralUrl;
+
+  // Grid vault methods
+  public validateGridVaultParams = validateGridVaultParams;
+  public getGridMinDeposit = this.withTokensInit(getGridMinDeposit);
+  public getGridTotalInvestment = this.withTokensInit(getGridTotalInvestment);
+  public createGridVault = createGridVault<ChainType>;
+  public claimGridVault = claimGridVault<ChainType>;
+  public closeGridVault = closeGridVault<ChainType>;
+  public getMyGridVaults = this.withTokensInit(getMyGridVaults);
+  public getMarketGridVaults = this.withTokensInit(getMarketGridVaults);
+
+  // Swing vault methods
+  public validateSwingVaultParams = validateSwingVaultParams;
+  public getSwingMinDeposit = this.withTokensInit(getSwingMinDeposit);
+  public getSwingTotalInvestment = this.withTokensInit(getSwingTotalInvestment);
+  public createClassicSwingVault: typeof createSwingVault<ChainType, 'classic'> = (...args) =>
+    createSwingVault<ChainType, 'classic'>(...args);
+  public createPhasedSwingVault: typeof createSwingVault<ChainType, 'phased'> = (...args) =>
+    createSwingVault<ChainType, 'phased'>(...args);
+  public claimSwingVault = claimGridVault<ChainType>;
+  public closeSwingVault = closeGridVault<ChainType>;
+  public getMySwingVaults = this.withTokensInit(getMySwingVaults);
+  public getMarketSwingVaults = this.withTokensInit(getMarketSwingVaults);
+
+  // DCA vault methods
+  public validateDCAVaultParams = validateDCAVaultParams;
+  public getDCAMinDeposit = this.withTokensInit(getDCAMinDeposit);
+  public getDCATotalInvestment = this.withTokensInit(getDCATotalInvestment);
+  public createDCAVault = createDCAVault<ChainType>;
+  public claimDCAVault = claimDCAVault<ChainType>;
+  public closeDCAVault = closeDCAVault<ChainType>;
+  public getMyDCAVaults = this.withTokensInit(getMyDCAVaults);
+  public getMarketDCAVaults = this.withTokensInit(getMarketDCAVaults);
 }

@@ -6,10 +6,10 @@ import {
   type PaginationResponse,
   botInnerApiPrefix,
 } from '../';
-import { formatAmount, formatDurationHumanize, parseDisplayPrice } from '@/utils/format';
+import { formatAmount, formatDurationHumanize } from '@/utils/format';
 import Big from 'big.js';
 
-import { getTokenByAddress } from '@/utils/token';
+import { getTokenByAddress } from '@/stores/tokens';
 import dayjs from '@/utils/dayjs';
 import { DCA_PRICE_DECIMALS } from './contract';
 import { globalState } from '@/stores';
@@ -368,13 +368,13 @@ export const dcaBotServices = {
       data.side === 'sell'
         ? lowestPrice
         : new Big(highestPrice || 0).gt(0)
-          ? parseDisplayPrice(new Big(1).div(highestPrice).toString(), baseToken?.symbol || '')
+          ? new Big(1).div(highestPrice).round(12, Big.roundDown).toString()
           : '0';
     data.highest_price =
       data.side === 'sell'
         ? highestPrice
         : new Big(lowestPrice || 0).gt(0)
-          ? parseDisplayPrice(new Big(1).div(lowestPrice).toString(), baseToken?.symbol || '')
+          ? new Big(1).div(lowestPrice).round(12, Big.roundDown).toString()
           : '0';
 
     data.investmentAmount = formatAmount(

@@ -46,6 +46,24 @@ sdk.changeEnv({
 
 For more detailed examples, please refer to the [examples directory](./packages/examples) in the repository.
 
+### Token Operations
+
+You can access token data using the following methods:
+
+```typescript
+// Get all tokens for the current chain
+const tokens = await sdk.getTokens();
+
+// Get token by symbol
+const nearToken = await sdk.getTokenBySymbol('NEAR');
+
+// Get token by address
+const token = await sdk.getTokenByAddress('token-address');
+
+// Get all tokens mapped by symbol
+const tokensBySymbol = await sdk.getTokensBySymbol();
+```
+
 ### Retrieve Pairs
 
 To create a vault, you need a `pairId`. You can retrieve available pairs using the following method:
@@ -220,7 +238,35 @@ console.log('Referral URL:', referralUrl);
   - **Returns**: `DeltaTradeSDK` instance
 
 - **`sdk.changeEnv(params)`**: Change the SDK environment.
+
   - **Parameters**: `Partial<SDKParams>`
+
+- **`sdk.isInitialized()`**: Check if the SDK is initialized.
+
+  - **Returns**: `boolean`
+
+- **`sdk.initTokens()`**: Manually initialize or refresh token data.
+  - **Returns**: `Promise<boolean>`
+
+### Token Operations
+
+- **`sdk.getTokens()`**: Get all tokens for the current chain.
+
+  - **Returns**: `Promise<Token.TokenMeta[]>`
+
+- **`sdk.getTokenBySymbol(symbol, chain?)`**: Get token by symbol.
+
+  - **Parameters**: `symbol: string, chain?: Chain`
+  - **Returns**: `Promise<Token.TokenMeta | undefined>`
+
+- **`sdk.getTokenByAddress(address, chain?)`**: Get token by address.
+
+  - **Parameters**: `address: string, chain?: Chain`
+  - **Returns**: `Promise<Token.TokenMeta | undefined>`
+
+- **`sdk.getTokensBySymbol(chain?)`**: Get all tokens mapped by symbol.
+  - **Parameters**: `chain?: Chain`
+  - **Returns**: `Promise<Record<string, Token.TokenMeta>>`
 
 ### Market and Pairs
 

@@ -30,7 +30,6 @@ export default function Page() {
   const { wallet, currentChain } = useWalletContext();
 
   useEffect(() => {
-    console.log('changeEnv', currentChain, wallet.accountId);
     sdk.changeEnv({ chain: currentChain, accountId: wallet.accountId });
   }, [wallet.accountId, currentChain]);
 
@@ -67,10 +66,6 @@ function MyGridVaults() {
   const [list, setList] = useState<MyGridVault[]>([]);
   const [hasMore, setHasMore] = useState(false);
 
-  useEffect(() => {
-    console.log('wallet', wallet);
-  }, [wallet]);
-
   const { loading } = useRequest(
     () => sdk.getMyGridVaults({ orderBy: 'profit_24_usd', dir: 'desc', page, pageSize }),
     {
@@ -88,7 +83,7 @@ function MyGridVaults() {
 
   async function handleClaim(id: number) {
     const trans = await sdk.claimGridVault(id);
-    console.log('trans', trans);
+
     if (currentChain === 'near') {
       await window.nearWallet?.signAndSendTransactions({ transactions: trans });
     } else {
@@ -180,7 +175,7 @@ function CreateGridVault() {
   const { data: pairs } = useRequest(() => sdk.getPairs({ type: 'grid' }), {
     onSuccess(res) {
       if (!formData.pairId) {
-        setFormData({ ...formData, pairId: res[0].pair_id });
+        setFormData({ ...formData, pairId: res?.[0]?.pair_id });
       }
     },
   });

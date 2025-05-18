@@ -24,7 +24,6 @@ export default function UserAssetsPage() {
   const { wallet, currentChain } = useWalletContext();
 
   useEffect(() => {
-    console.log('changeEnv', currentChain, wallet.accountId);
     sdk.changeEnv({ chain: currentChain, accountId: wallet.accountId });
   }, [wallet.accountId, currentChain]);
 

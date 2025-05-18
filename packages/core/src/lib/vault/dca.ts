@@ -69,9 +69,7 @@ export async function validateDCAVaultParams(params: CreateDCAVaultParams) {
   const tokenInSymbol = params.tradeType === 'buy' ? pair?.base_token : pair?.quote_token;
   if (minDeposit && new Big(params.singleAmountIn || 0).lt(minDeposit)) {
     errors.singleAmountIn = [
-      `The initial investment cannot be less than ${formatNumber(minDeposit, {
-        maximumFractionDigits: 6,
-      })} ${tokenInSymbol}`,
+      `The initial investment cannot be less than ${formatNumber(minDeposit)} ${tokenInSymbol}`,
     ];
   }
 

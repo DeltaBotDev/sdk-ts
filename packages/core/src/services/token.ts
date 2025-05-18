@@ -1,8 +1,7 @@
-import { getTokenAddress, getTokenByAddress } from '@/utils/token';
+import { getTokenAddress } from '@/stores/tokens';
 import { botInnerApiPrefix, request, type WrapperResponse } from '.';
 import { generateUrl } from '@/utils/common';
-import { parseDisplayPrice } from '@/utils/format';
-import { CHAINS, getConfigs } from '@/config';
+import { CHAINS } from '@/config';
 import { globalState } from '@/stores';
 import type { BotModel } from '../types/bot';
 import { Chain } from '../types/contract';

@@ -48,7 +48,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       <_SolanaWalletProvider
         wallets={[]}
         autoConnect
-        onError={(e) => console.log('_SolanaWalletProvider', e)}
+        onError={(e) => console.log('solana wallet adapter error', e)}
       >
         <WalletModalProvider>{children}</WalletModalProvider>
       </_SolanaWalletProvider>

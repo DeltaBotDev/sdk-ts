@@ -5,11 +5,11 @@ import {
   GridBotContractParams,
 } from '@/services/bot/contract';
 import { globalState } from '@/stores';
-import { parseDisplayAmount } from '@/utils/format';
 import Big from 'big.js';
 import { validateAccountId, getPair, getMinDeposit, getPairPrice } from '.';
 import { Chain } from '../../types/contract';
 import dayjs from 'dayjs';
+import { safeBig, safeBigMax } from '@/utils/big';
 
 export interface CreateGridVaultParams {
   pairId: string;
@@ -131,12 +131,14 @@ export async function getGridMinDeposit(params: CreateGridVaultParams) {
   const { minBaseDeposit, minQuoteDeposit } = await getMinDeposit(params.pairId, 'grid');
   if (new Big(minPrice || 0).eq(0) || new Big(maxPrice || 0).eq(0))
     return minBaseDeposit.toString() || '0';
-  const result = Math.max(
-    Number(minBaseDeposit || '0'),
-    new Big(minQuoteDeposit || '0').div(minPrice).toNumber(),
+  const value = safeBigMax(
+    minBaseDeposit,
+    safeBig(minQuoteDeposit)
+      .div(minPrice || 1)
+      .round(8, Big.roundUp)
+      .toFixed(),
   );
-  const pair = await getPair(params.pairId);
-  return parseDisplayAmount(result, pair?.base_token.symbol!, { rm: Big.roundUp });
+  return value;
 }
 
 export async function createGridVault<ChainType extends Chain>(

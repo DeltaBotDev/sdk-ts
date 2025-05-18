@@ -8,7 +8,7 @@ import {
   solanaContractServices,
 } from './../contract';
 
-import { getTokenAddress, getTokenByAddress, getTokenDecimals } from '@/utils/token';
+import { getTokenAddress, getTokenByAddress } from '@/stores/tokens';
 
 import dayjs from '@/utils/dayjs';
 import * as anchor from '@coral-xyz/anchor';
@@ -526,8 +526,8 @@ export const botSolanaContractServices = {
       type: BotModel.GridBotType;
     },
   ) {
-    const baseTokenDecimals = getTokenDecimals(params.base_token.symbol, 'solana');
-    const quoteTokenDecimals = getTokenDecimals(params.quote_token.symbol, 'solana');
+    const baseTokenDecimals = getTokenByAddress(params.base_token.code, 'solana')?.decimals;
+    const quoteTokenDecimals = getTokenByAddress(params.quote_token.code, 'solana')?.decimals;
     const {
       name,
       slippage,

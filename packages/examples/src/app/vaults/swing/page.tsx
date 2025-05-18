@@ -34,7 +34,6 @@ export default function Page() {
   const { wallet, currentChain } = useWalletContext();
 
   useEffect(() => {
-    console.log('changeEnv', currentChain, wallet.accountId);
     sdk.changeEnv({ chain: currentChain, accountId: wallet.accountId });
   }, [wallet.accountId, currentChain]);
 
@@ -88,9 +87,8 @@ function MySwingVaults() {
 
   async function handleClaim(id: number) {
     const trans = await sdk.claimSwingVault(id);
-    console.log('trans', trans);
     if (currentChain === 'near') {
-      await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+      await window.nearWallet?.signAndSendTransactions({ transactions: trans as any });
     } else {
       await sendTransaction(trans as any);
     }
@@ -99,7 +97,7 @@ function MySwingVaults() {
   async function handleClose(id: number) {
     const trans = await sdk.closeSwingVault(id);
     if (currentChain === 'near') {
-      await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+      await window.nearWallet?.signAndSendTransactions({ transactions: trans as any });
     } else {
       await sendTransaction(trans as any);
     }
@@ -197,10 +195,10 @@ function CreateSwingVault() {
   const { data: pairs } = useRequest(() => sdk.getPairs({ type: 'swing' }), {
     onSuccess(res) {
       if (!classicFormData.pairId) {
-        setClassicFormData({ ...classicFormData, pairId: res[0].pair_id });
+        setClassicFormData({ ...classicFormData, pairId: res?.[0]?.pair_id });
       }
       if (!phasedFormData.pairId) {
-        setPhasedFormData({ ...phasedFormData, pairId: res[0].pair_id });
+        setPhasedFormData({ ...phasedFormData, pairId: res?.[0]?.pair_id });
       }
     },
   });
@@ -257,7 +255,7 @@ function CreateSwingVault() {
         'Create Swing Vault',
       );
       if (currentChain === 'near') {
-        await window.nearWallet?.signAndSendTransactions({ transactions: trans });
+        await window.nearWallet?.signAndSendTransactions({ transactions: trans as any });
       } else {
         await sendTransaction(trans as any);
       }

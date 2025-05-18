@@ -1,6 +1,6 @@
 import { getRPCNodeUrls } from '@/config/rpc';
 import { formatAmount, formatFileUrl, parseAmount } from '@/utils/format';
-import { getTokenAddress, getTokenByAddress, getTokenMeta } from '@/utils/token';
+import { getTokenAddress, getTokenByAddress, getTokenBySymbol } from '@/stores/tokens';
 import { type Transaction } from '@near-wallet-selector/core';
 
 import { connect, providers, keyStores, type Near } from 'near-api-js';
@@ -298,7 +298,7 @@ export const solanaContractServices = {
       const connection = this.connect();
       const publicKey = new PublicKey(globalState.get('accountId')!);
       const res = await connection.getBalance(publicKey!);
-      return formatAmount(res, getTokenMeta('SOL')?.SolanaDecimals);
+      return formatAmount(res, getTokenBySymbol('SOL')?.decimals);
     } catch (error) {
       console.error(error);
       return '0';

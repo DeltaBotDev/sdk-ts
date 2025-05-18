@@ -1,6 +1,17 @@
-import { Chain, Token } from './contract';
+import { Chain, TokenMetadata } from './contract';
 
 export namespace BotModel {
+  export interface Token {
+    id: number;
+    code: string;
+    symbol: string;
+    name: string;
+    icon: string;
+    decimals: number;
+    oracle_id: string;
+    volume: string;
+    amount?: string;
+  }
   export type BotPair = {
     id: number;
     pair_id: string;
@@ -54,18 +65,6 @@ export namespace BotModel {
   export type BotType = 'grid' | 'swing' | 'dca';
   export type GridBotType = 'grid' | 'swing';
   export type BotStatus = 'active' | 'expired' | 'closed';
-
-  export interface Token {
-    id: number;
-    code: string;
-    symbol: string;
-    name: string;
-    icon: string;
-    decimals: number;
-    oracle_id: string;
-    volume: string;
-    amount?: string;
-  }
 
   export interface MarketGridBot {
     index: number;
@@ -200,10 +199,10 @@ export namespace BotModel {
     frequency: string;
     side: TradeType;
     tradeType: TradeType;
-    baseToken?: Token.TokenMeta;
-    quoteToken?: Token.TokenMeta;
-    tokenIn?: Token.TokenMeta;
-    tokenOut?: Token.TokenMeta;
+    baseToken?: TokenMetadata;
+    quoteToken?: TokenMetadata;
+    tokenIn?: TokenMetadata;
+    tokenOut?: TokenMetadata;
     filledAmount: string;
     filledPercent: string;
     investmentAmount: string;

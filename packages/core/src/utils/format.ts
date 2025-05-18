@@ -1,11 +1,17 @@
 import Big from 'big.js';
 import dayjs from '@/utils/dayjs';
-import { TOKENS } from '@/config';
 import { generateUrl } from './common';
 import { globalState } from '@/stores';
 
 Big.DP = 40;
 Big.PE = 24;
+
+interface FormatNumberOptions {
+  rm?: Big.RoundingMode;
+  displayMinimum?: boolean;
+  maxDigits?: number;
+  useUnit?: boolean;
+}
 
 export function formatTimestamp(timestamp: string | number | Date, template?: string) {
   if (!dayjs(timestamp).isValid()) return '';
@@ -86,51 +92,54 @@ export function parseAmount(amount: string | number | undefined, decimals = 24) 
   }
 }
 
-export function formatNumber(val: string | number | undefined, options?: Intl.NumberFormatOptions) {
-  if (val === undefined) return '';
-  return new Intl.NumberFormat('en-US', options).format(Number(val));
-}
-
-export function parseDisplayAmount(
-  val: string | number | undefined,
-  symbol: string,
-  options?: { rm?: Big.RoundingMode },
-) {
-  const result = formatNumberBySymbol(val, symbol, { rm: options?.rm, displayMinimum: false });
-  if (!result) return '0';
-  return result.replace(/^[^-0-9.]+|[^-0-9.]/g, '');
-}
-export function parseDisplayPrice(
-  val: string | number | undefined,
-  symbol: string,
-  options?: { rm?: Big.RoundingMode },
-) {
-  const result = formatUSDPrice(val, { symbol, showSign: false, rm: options?.rm });
-  if (!result) return '0';
-  return result.replace(/^[^-0-9.]+|[^-0-9.]/g, '');
-}
-
-export function formatNumberBySymbol(
-  val: string | number | undefined,
-  symbol: string,
-  options?: {
-    rm?: Big.RoundingMode;
-    displayMinimum?: boolean;
-  },
-) {
+export function formatNumber(val: string | number | undefined, options?: FormatNumberOptions) {
   if (!val || !Number(val)) return '0';
+  const { rm = Big.roundHalfUp, displayMinimum, useUnit } = options || {};
 
-  const tokenConfig = TOKENS[symbol] || {};
-  const decimals = tokenConfig.amountDecimals ?? 2;
-  const min = new Big(10).pow(-decimals);
   const bigVal = new Big(val);
-  const { rm = Big.roundHalfUp, displayMinimum = true } = options || {};
-  const roundedVal = bigVal.round(decimals, rm);
+
+  // auto calculate the appropriate number of digits, maximum 16 digits
+  let maxDigits = options?.maxDigits;
+  if (maxDigits === undefined) {
+    const absVal = bigVal.abs();
+    if (absVal.eq(0)) {
+      maxDigits = 0;
+    } else if (absVal.gte(1)) {
+      // greater than or equal to 1, keep 2 digits
+      maxDigits = 2;
+    } else {
+      // calculate the position of the first non-zero digit
+      const str = absVal.toFixed();
+      const match = str.match(/^0\.0*/);
+      if (match) {
+        // for decimals, calculate the number of leading zeros, add 2 valid digits, but not more than 16 digits
+        maxDigits = Math.min(match[0].length - 1 + 2, 16);
+      } else {
+        maxDigits = 2;
+      }
+    }
+  }
+  maxDigits = Math.min(maxDigits, 8);
+
+  if (useUnit) {
+    if (bigVal.gte(1e9)) {
+      return new Big(bigVal.div(1e9)).round(1).toString() + 'B';
+    }
+    if (bigVal.gte(1e6)) {
+      return new Big(bigVal.div(1e6)).round(1).toString() + 'M';
+    }
+    if (bigVal.gte(1e3)) {
+      return new Big(bigVal.div(1e3)).round(1).toString() + 'K';
+    }
+  }
+
+  const min = new Big(10).pow(-maxDigits);
+  const roundedVal = bigVal.round(maxDigits, rm);
 
   if (displayMinimum && roundedVal.abs().lt(min)) {
     const formattedMin = new Intl.NumberFormat('en-US', {
       style: 'decimal',
-      maximumFractionDigits: decimals,
+      maximumFractionDigits: maxDigits,
     }).format(min.toNumber());
 
     return `< ${roundedVal.lt(0) ? '-' : ''}${formattedMin}`;
@@ -138,58 +147,10 @@ export function formatNumberBySymbol(
 
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'decimal',
-    maximumFractionDigits: decimals,
+    maximumFractionDigits: maxDigits,
   }).format(roundedVal.toNumber());
 
   return formattedValue;
-}
-
-export function formatUSDPrice(
-  val: string | number | undefined,
-  options?: {
-    symbol?: string;
-    showSign?: boolean;
-    decimals?: number;
-    rm?: Big.RoundingMode;
-  } & Intl.NumberFormatOptions,
-) {
-  const sign = options?.showSign ? '$' : '';
-  if (!val || !Number(val)) return sign + '0';
-
-  const decimals =
-    options?.decimals ??
-    (new Big(val).abs().lt(1) ? (options?.symbol ? TOKENS[options.symbol]?.priceDecimals : 2) : 2);
-  const min = new Big(10).pow(-(decimals ?? 2));
-  const bigVal = new Big(val);
-  if (bigVal.abs().lt(min)) return `< ${bigVal.lt(0) ? '-' : ''}${sign}${min}`;
-  return new Intl.NumberFormat('en-US', {
-    style: options?.showSign ? 'currency' : 'decimal',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-    ...options,
-  }).format(bigVal.round(decimals, options?.rm ?? Big.roundHalfUp).toNumber());
-}
-
-export function formatPercent(
-  val: string | number | undefined,
-  options?: {
-    precision?: number;
-    showPlus?: boolean;
-    decimals?: number;
-    rm?: Big.RoundingMode;
-    displayMinimum?: boolean;
-  },
-) {
-  const _val = isNaN(Number(val)) ? 0 : Number(val);
-  const symbol = options?.showPlus && _val > 0 ? '+' : '';
-  const value = new Big(_val)
-    .times(10 ** (options?.decimals || 0))
-    .round(options?.precision ?? 2, options?.rm);
-  if (options?.displayMinimum && value.abs().gt(0) && value.abs().lt(1)) {
-    return `< ${value.lt(0) ? '-' : ''}1%`;
-  }
-  return symbol + value.toString() + '%';
 }
 
 export function formatExplorerUrl(
